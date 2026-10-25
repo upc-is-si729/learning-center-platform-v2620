@@ -16,7 +16,8 @@ public final class ProfilePersistenceAssembler {
     }
 
     public static Profile toDomainFromPersistence(ProfilePersistenceEntity entity) {
-        return new Profile(
+        if (entity == null) return null;
+        return Profile.reconstitute(
                 entity.getId(),
                 toDomainFromPersistence(entity.getName()),
                 entity.getEmailAddress(),

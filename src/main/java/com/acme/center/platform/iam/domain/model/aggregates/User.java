@@ -15,13 +15,9 @@ import java.util.Set;
 @Getter
 public class User extends AbstractDomainAggregateRoot<User> {
 
-    @Setter
     private Long id;
-    @Setter
     private String username;
-    @Setter
     private String password;
-    @Setter
     private Set<Role> roles;
 
     public User() {
@@ -37,6 +33,22 @@ public class User extends AbstractDomainAggregateRoot<User> {
     public User(String username, String password, List<Role> roles) {
         this(username, password);
         addRoles(roles);
+    }
+
+    /**
+     * Reconstitutes an existing user from persistence state.
+     *
+     * @param id The unique identifier.
+     * @param username The username.
+     * @param password The encoded password.
+     * @param roles The assigned roles.
+     * @return The reconstituted User instance.
+     */
+    public static User reconstitute(Long id, String username, String password, Set<Role> roles) {
+        var user = new User(username, password);
+        user.id = id;
+        user.roles = roles != null ? new HashSet<>(roles) : new HashSet<>();
+        return user;
     }
 
     /**
