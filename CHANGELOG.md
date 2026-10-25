@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **RESTful IAM Endpoints**:
+  - Adopted pure REST resource endpoints `POST /api/v1/users` for user creation (sign-up) and `POST /api/v1/tokens` for security token generation (sign-in).
+  - Added `TokensController` and updated `UsersController` with dedicated unit test suites (`TokensControllerTest`, `UsersControllerTest`).
 - **Project Loom Virtual Threads Concurrency**:
   - Enabled virtual thread request dispatching in embedded Tomcat via `spring.threads.virtual.enabled=true`.
   - Added `VirtualThreadsConfiguration` under `com.acme.center.platform.shared.infrastructure.concurrency.loom.configuration` providing `@EnableAsync` and a virtual-thread-backed `applicationTaskExecutor` bean.
@@ -24,13 +27,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Modern Sequenced Collections & Stream Gatherers**:
   - Added `getPreviousItem(TutorialId)` and `isSequenceConsistent()` with `Gatherers.windowSliding(2)` in `LearningPath`.
   - Added `calculateProgressMilestones()` using `Gatherers.scan(...)` and sequenced accessors (`getLatestProgressRecordItem()`, `getInitialProgressRecordItem()`) in `ProgressRecord`.
-- **Documentation**:
-  - Added Architecture Decision Records in `docs/adrs.md` (ADR-001 through ADR-007).
-  - Added `docs/class-diagram.md` and updated `docs/class-diagram.puml`.
+- **Documentation & Architecture Standards**:
+  - Added Architecture Decision Records in `docs/adrs.md` (ADR-001 through ADR-013).
+  - Updated `docs/class-diagram.puml` with PlantUML comment conventions and structural alignment.
   - Added `CONTRIBUTING.md` defining architecture, testing, and conventional commit standards.
-  - Updated `docs/user-stories.md` with RFC 9457 error specifications.
+  - Updated `docs/user-stories.md` with RFC 9457 error specifications and RESTful IAM endpoints.
 
 ### Changed
+- **RESTful IAM Transition**:
+  - Replaced legacy RPC-style `AuthenticationController` with RESTful `TokensController` and `UsersController`.
+  - Updated `WebSecurityConfiguration` filter chain to permit unauthenticated access to `POST /api/v1/users` and `POST /api/v1/tokens`.
+- **Runtime & Build Standardization**:
+  - Upgraded build definitions and Docker configurations to Java 27 and Maven `3.10.0-eclipse-temurin-27`.
+  - Standardized architecture documentation and terminology on Modular Monolith with Layered Domain-Driven Design (Layered DDD) and REST Resources.
 - **Domain Aggregate Invariant Encapsulation**:
   - Eliminated Lombok `@Setter` annotations across `Enrollment`, `Student`, `Course`, `User`, `Profile`, `LearningPathItem`, `ProgressRecordItem`, and `Role`.
   - Introduced static `reconstitute(...)` factories on aggregate roots for pure persistence rehydration.
