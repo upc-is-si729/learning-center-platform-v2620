@@ -5,7 +5,7 @@ import com.acme.center.platform.learning.domain.model.valueobjects.AcmeStudentRe
 import com.acme.center.platform.learning.domain.repositories.EnrollmentRepository;
 import com.acme.center.platform.learning.infrastructure.persistence.jpa.assemblers.EnrollmentPersistenceAssembler;
 import com.acme.center.platform.learning.infrastructure.persistence.jpa.repositories.EnrollmentPersistenceRepository;
-import org.springframework.context.ApplicationEventPublisher;
+import com.acme.center.platform.shared.infrastructure.events.DomainEventPublisher;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,19 +15,19 @@ import java.util.Optional;
  * Repository adapter that bridges the enrollment domain repository port with Spring Data JPA.
  *
  * <p>Dispatches domain events registered on the {@link Enrollment} aggregate root
- * via {@link ApplicationEventPublisher} after persistence.</p>
+ * via {@link DomainEventPublisher} after persistence.</p>
  */
 @Repository
 public class EnrollmentRepositoryImpl implements EnrollmentRepository {
 
     private final EnrollmentPersistenceRepository enrollmentPersistenceRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final DomainEventPublisher domainEventPublisher;
 
     public EnrollmentRepositoryImpl(
             EnrollmentPersistenceRepository enrollmentPersistenceRepository,
-            ApplicationEventPublisher eventPublisher) {
+            DomainEventPublisher domainEventPublisher) {
         this.enrollmentPersistenceRepository = enrollmentPersistenceRepository;
-        this.eventPublisher = eventPublisher;
+        this.domainEventPublisher = domainEventPublisher;
     }
 
     @Override
@@ -66,8 +66,7 @@ public class EnrollmentRepositoryImpl implements EnrollmentRepository {
     public Enrollment save(Enrollment enrollment) {
         var savedEntity = enrollmentPersistenceRepository.save(EnrollmentPersistenceAssembler.toPersistenceFromDomain(enrollment));
         var savedEnrollment = EnrollmentPersistenceAssembler.toDomainFromPersistence(savedEntity);
-        enrollment.domainEvents().forEach(eventPublisher::publishEvent);
-        enrollment.clearDomainEvents();
+        domainEventPublisher.publishAndClearEvents(enrollment);
         return savedEnrollment;
     }
 }

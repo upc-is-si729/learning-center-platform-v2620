@@ -8,6 +8,7 @@ import com.acme.center.platform.learning.domain.model.valueobjects.TutorialId;
 import com.acme.center.platform.learning.infrastructure.persistence.jpa.entities.CoursePersistenceEntity;
 import com.acme.center.platform.learning.infrastructure.persistence.jpa.entities.EnrollmentPersistenceEntity;
 import com.acme.center.platform.learning.infrastructure.persistence.jpa.repositories.EnrollmentPersistenceRepository;
+import com.acme.center.platform.shared.infrastructure.events.DomainEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,7 +37,8 @@ class EnrollmentRepositoryImplTest {
 
     @BeforeEach
     void setUp() {
-        enrollmentRepository = new EnrollmentRepositoryImpl(enrollmentPersistenceRepository, eventPublisher);
+        var domainEventPublisher = new DomainEventPublisher(eventPublisher);
+        enrollmentRepository = new EnrollmentRepositoryImpl(enrollmentPersistenceRepository, domainEventPublisher);
     }
 
     @Test
