@@ -13,12 +13,11 @@ public final class StudentPersistenceAssembler {
 
     public static Student toDomainFromPersistence(StudentPersistenceEntity entity) {
         if (entity == null) return null;
-        var student = new Student();
-        student.setId(entity.getId());
-        student.setAcmeStudentRecordId(entity.getAcmeStudentRecordId());
-        student.setProfileId(entity.getProfileId());
-        student.setPerformanceMetricSet(entity.getPerformanceMetricSet());
-        return student;
+        return Student.reconstitute(
+                entity.getId(),
+                entity.getAcmeStudentRecordId(),
+                entity.getProfileId(),
+                entity.getPerformanceMetricSet());
     }
 
     public static StudentPersistenceEntity toPersistenceFromDomain(Student student) {

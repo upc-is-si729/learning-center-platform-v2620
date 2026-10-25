@@ -9,7 +9,7 @@ import com.acme.center.platform.profiles.interfaces.rest.resources.ProfileResour
 import com.acme.center.platform.profiles.interfaces.rest.transform.CreateProfileCommandFromResourceAssembler;
 import com.acme.center.platform.profiles.interfaces.rest.transform.ProfileResourceFromEntityAssembler;
 import com.acme.center.platform.shared.application.result.ApplicationError;
-import com.acme.center.platform.shared.interfaces.rest.transform.ErrorResponseAssembler;
+import com.acme.center.platform.shared.interfaces.rest.transform.ProblemDetailFromApplicationErrorAssembler;
 import com.acme.center.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -104,7 +104,7 @@ public class ProfilesController {
         var profile = profileQueryService.handle(getProfileByIdQuery);
         if (profile.isEmpty()) {
             var error = ApplicationError.notFound("Profile", profileId.toString());
-            return ErrorResponseAssembler.toErrorResponseFromApplicationError(error);
+            return ProblemDetailFromApplicationErrorAssembler.toResponseFromApplicationError(error);
         }
         var profileEntity = profile.get();
         var profileResource = ProfileResourceFromEntityAssembler.toResourceFromEntity(profileEntity);

@@ -17,7 +17,7 @@ public class EnrollmentResourceFromEntityAssembler {
         return new EnrollmentResource(
                 entity.getId(),
                 entity.getAcmeStudentRecordId().studentRecordId(),
-                entity.getCourse().getId(),
+                entity.getCourseId().courseId(),
                 entity.getStatusName(),
                 entity.calculateDaysElapsed());
     }

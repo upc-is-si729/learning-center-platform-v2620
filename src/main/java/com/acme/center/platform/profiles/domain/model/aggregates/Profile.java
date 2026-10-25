@@ -7,7 +7,6 @@ import com.acme.center.platform.profiles.domain.model.valueobjects.PersonName;
 import com.acme.center.platform.profiles.domain.model.valueobjects.StreetAddress;
 import com.acme.center.platform.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.Objects;
 
@@ -21,7 +20,6 @@ import java.util.Objects;
 public class Profile extends AbstractDomainAggregateRoot<Profile> {
 
     @Getter
-    @Setter
     private Long id;
 
     @Getter
@@ -37,6 +35,19 @@ public class Profile extends AbstractDomainAggregateRoot<Profile> {
         this.name = Objects.requireNonNull(name, "name must not be null");
         this.emailAddress = Objects.requireNonNull(emailAddress, "emailAddress must not be null");
         this.streetAddress = Objects.requireNonNull(streetAddress, "streetAddress must not be null");
+    }
+
+    /**
+     * Reconstitutes an existing profile from persistence state.
+     *
+     * @param id The unique identifier.
+     * @param name The person name.
+     * @param emailAddress The email address.
+     * @param streetAddress The street address.
+     * @return The reconstituted Profile instance.
+     */
+    public static Profile reconstitute(Long id, PersonName name, EmailAddress emailAddress, StreetAddress streetAddress) {
+        return new Profile(id, name, emailAddress, streetAddress);
     }
 
     /**

@@ -1,13 +1,11 @@
 package com.acme.center.platform.learning.domain.model.aggregates;
 
 import com.acme.center.platform.learning.domain.model.events.TutorialCompletedEvent;
-import com.acme.center.platform.learning.domain.model.valueobjects.AcmeStudentRecordId;
-import com.acme.center.platform.learning.domain.model.valueobjects.EnrollmentStatus;
-import com.acme.center.platform.learning.domain.model.valueobjects.ProgressRecord;
-import com.acme.center.platform.learning.domain.model.valueobjects.TutorialId;
+import com.acme.center.platform.learning.domain.model.valueobjects.*;
 import com.acme.center.platform.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
 import lombok.Getter;
-import lombok.Setter;
+
+import java.util.Objects;
 
 /**
  * Enrollment aggregate root.
@@ -20,61 +18,80 @@ public class Enrollment extends AbstractDomainAggregateRoot<Enrollment> {
     /**
      * The unique identifier for the enrollment.
      */
-    @Setter
     private Long id;
 
     /**
      * The Acme Student Record ID of the student enrolled in the course.
      */
-    @Setter
     private AcmeStudentRecordId acmeStudentRecordId;
 
     /**
-     * The course in which the student is enrolled.
+     * The course ID in which the student is enrolled.
      */
-    @Setter
-    private Course course;
+    private CourseId courseId;
 
     /**
      * The progress record for the enrollment, tracking tutorial completion.
      */
-    @Setter
     private ProgressRecord progressRecord;
 
     /**
      * The current status of the enrollment.
      */
-    @Setter
     private EnrollmentStatus status;
 
     /**
-     * Default constructor for Enrollment.
-     * Required for reconstruction from persistence.
+     * Protected default constructor for Enrollment.
      */
-    public Enrollment() {
-        // Required for reconstruction
+    protected Enrollment() {
+        this.progressRecord = new ProgressRecord();
     }
 
     /**
      * Constructor for Enrollment.
      * Initializes a new enrollment with the REQUESTED status and an empty progress record.
      * @param acmeStudentRecordId The Acme Student Record ID of the student.
-     * @param course The course for the enrollment.
+     * @param courseId The course ID for the enrollment.
      */
-    public Enrollment(AcmeStudentRecordId acmeStudentRecordId, Course course) {
-        this.acmeStudentRecordId = acmeStudentRecordId;
-        this.course = course;
+    public Enrollment(AcmeStudentRecordId acmeStudentRecordId, CourseId courseId) {
+        this.acmeStudentRecordId = Objects.requireNonNull(acmeStudentRecordId, "studentRecordId is required");
+        this.courseId = Objects.requireNonNull(courseId, "courseId is required");
         this.status = EnrollmentStatus.REQUESTED;
         this.progressRecord = new ProgressRecord();
     }
 
     /**
-     * Confirms the enrollment.
-     * Changes the status to CONFIRMED and initializes the progress record based on the course's learning path.
+     * Reconstitutes an existing enrollment from persistence state.
+     *
+     * @param id The unique identifier.
+     * @param acmeStudentRecordId The Acme Student Record ID.
+     * @param courseId The course ID for the enrollment.
+     * @param status The current enrollment status.
+     * @param progressRecord The progress record.
+     * @return The reconstituted Enrollment instance.
      */
-    public void confirm() {
+    public static Enrollment reconstitute(
+            Long id,
+            AcmeStudentRecordId acmeStudentRecordId,
+            CourseId courseId,
+            EnrollmentStatus status,
+            ProgressRecord progressRecord) {
+        var enrollment = new Enrollment(acmeStudentRecordId, courseId);
+        enrollment.id = id;
+        enrollment.status = status;
+        enrollment.progressRecord = progressRecord != null ? progressRecord : new ProgressRecord();
+        return enrollment;
+    }
+
+    /**
+     * Confirms the enrollment.
+     * Changes the status to CONFIRMED and initializes the progress record based on the provided learning path.
+     *
+     * @param learningPath The learning path of the course.
+     */
+    public void confirm(LearningPath learningPath) {
         this.status = EnrollmentStatus.CONFIRMED;
-        this.progressRecord.initializeProgressRecord(this, course.getLearningPath());
+        this.progressRecord.initializeProgressRecord(this, learningPath);
     }
 
     /**
@@ -87,10 +104,10 @@ public class Enrollment extends AbstractDomainAggregateRoot<Enrollment> {
 
     /**
      * Cancels the enrollment.
-     * Changes the status to CANCELLED.
+     * Changes the status to `CANCELED`.
      */
     public void cancel() {
-        this.status = EnrollmentStatus.CANCELLED;
+        this.status = EnrollmentStatus.CANCELED;
     }
 
     /**
@@ -110,15 +127,15 @@ public class Enrollment extends AbstractDomainAggregateRoot<Enrollment> {
     }
 
     /**
-     * Checks if the enrollment is cancelled.
-     * @return true if the enrollment is cancelled, false otherwise.
+     * Checks if the enrollment is canceled.
+     * @return true if the enrollment is canceled, false otherwise.
      */
     public boolean isCancelled() {
-        return this.status == EnrollmentStatus.CANCELLED;
+        return this.status == EnrollmentStatus.CANCELED;
     }
 
     /**
-     * Gets the name of the enrollment status in lowercase.
+     * Gets the name of the enrollment status in lowercase format.
      * @return The status name.
      */
     public String getStatusName() {
@@ -137,9 +154,10 @@ public class Enrollment extends AbstractDomainAggregateRoot<Enrollment> {
      * Marks a tutorial as completed for this enrollment.
      * Registers a TutorialCompletedEvent.
      * @param tutorialId The ID of the tutorial to complete.
+     * @param learningPath The learning path of the course.
      */
-    public void completeTutorial(TutorialId tutorialId) {
-        this.progressRecord.completeTutorial(tutorialId, course.getLearningPath());
+    public void completeTutorial(TutorialId tutorialId, LearningPath learningPath) {
+        this.progressRecord.completeTutorial(tutorialId, learningPath);
         this.registerDomainEvent(new TutorialCompletedEvent(this, this.getId(), tutorialId));
     }
 }

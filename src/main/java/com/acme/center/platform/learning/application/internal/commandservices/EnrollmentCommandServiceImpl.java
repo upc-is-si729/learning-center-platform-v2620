@@ -3,6 +3,7 @@ package com.acme.center.platform.learning.application.internal.commandservices;
 import com.acme.center.platform.learning.application.commandservices.EnrollmentCommandService;
 import com.acme.center.platform.learning.domain.model.aggregates.Enrollment;
 import com.acme.center.platform.learning.domain.model.commands.*;
+import com.acme.center.platform.learning.domain.model.valueobjects.CourseId;
 import com.acme.center.platform.learning.domain.repositories.CourseRepository;
 import com.acme.center.platform.learning.domain.repositories.EnrollmentRepository;
 import com.acme.center.platform.learning.domain.repositories.StudentRepository;
@@ -35,7 +36,7 @@ public class EnrollmentCommandServiceImpl implements EnrollmentCommandService {
             return Result.failure(ApplicationError.notFound("Course", command.courseId().toString()));
         }
         try {
-            var enrollment = new Enrollment(command.studentRecordId(), course.get());
+            var enrollment = new Enrollment(command.studentRecordId(), new CourseId(command.courseId()));
             enrollment = enrollmentRepository.save(enrollment);
             return Result.success(enrollment.getId());
         } catch (Exception e) {
@@ -48,7 +49,10 @@ public class EnrollmentCommandServiceImpl implements EnrollmentCommandService {
         return enrollmentRepository.findById(command.enrollmentId()).map(enrollment -> {
             if (enrollment.isConfirmed())
                 return Result.<Long, ApplicationError>failure(ApplicationError.conflict("Enrollment", "Enrollment is already confirmed"));
-            enrollment.confirm();
+            var course = courseRepository.findById(enrollment.getCourseId().courseId());
+            if (course.isEmpty())
+                return Result.<Long, ApplicationError>failure(ApplicationError.notFound("Course", enrollment.getCourseId().courseId().toString()));
+            enrollment.confirm(course.get().getLearningPath());
             return Result.<Long, ApplicationError>success(enrollmentRepository.save(enrollment).getId());
         }).orElseGet(() -> Result.failure(ApplicationError.notFound("Enrollment", command.enrollmentId().toString())));
     }
@@ -76,7 +80,10 @@ public class EnrollmentCommandServiceImpl implements EnrollmentCommandService {
     @Override
     public Result<Long, ApplicationError> handle(CompleteTutorialForEnrollmentCommand command) {
         return enrollmentRepository.findById(command.enrollmentId()).map(enrollment -> {
-            enrollment.completeTutorial(command.tutorialId());
+            var course = courseRepository.findById(enrollment.getCourseId().courseId());
+            if (course.isEmpty())
+                return Result.<Long, ApplicationError>failure(ApplicationError.notFound("Course", enrollment.getCourseId().courseId().toString()));
+            enrollment.completeTutorial(command.tutorialId(), course.get().getLearningPath());
             return Result.<Long, ApplicationError>success(enrollmentRepository.save(enrollment).getId());
         }).orElseGet(() -> Result.failure(ApplicationError.notFound("Enrollment", command.enrollmentId().toString())));
     }

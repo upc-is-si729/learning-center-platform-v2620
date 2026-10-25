@@ -40,7 +40,7 @@ public class TutorialCompletedEventHandler {
      *
      * @param event The {@link TutorialCompletedEvent} event
      */
-    @EventListener(TutorialCompletedEventHandler.class)
+    @EventListener(TutorialCompletedEvent.class)
     public void on(TutorialCompletedEvent event) {
         var getEnrollmentByIdQuery = new GetEnrollmentByIdQuery(event.getEnrollmentId());
         var enrollment = enrollmentQueryService.handle(getEnrollmentByIdQuery);

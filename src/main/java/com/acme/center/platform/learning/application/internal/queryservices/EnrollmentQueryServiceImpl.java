@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Application service that resolves enrollment read queries.
+ * Application service that resolves `enrollment` read queries.
  */
 @Service
 public class EnrollmentQueryServiceImpl implements EnrollmentQueryService {

@@ -15,14 +15,12 @@ public final class UserPersistenceAssembler {
 
     public static User toDomainFromPersistence(UserPersistenceEntity entity) {
         if (entity == null) return null;
-        var domain = new User();
-        domain.setId(entity.getId());
-        domain.setUsername(entity.getUsername());
-        domain.setPassword(entity.getPassword());
-        domain.setRoles(entity.getRoles().stream()
+        var roles = entity.getRoles() == null
+                ? new HashSet<com.acme.center.platform.iam.domain.model.entities.Role>()
+                : entity.getRoles().stream()
                 .map(RolePersistenceAssembler::toDomainFromPersistence)
-                .collect(java.util.stream.Collectors.toSet()));
-        return domain;
+                .collect(java.util.stream.Collectors.toSet());
+        return User.reconstitute(entity.getId(), entity.getUsername(), entity.getPassword(), roles);
     }
 
     public static UserPersistenceEntity toPersistenceFromDomain(User user) {

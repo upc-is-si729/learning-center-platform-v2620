@@ -6,7 +6,7 @@ import com.acme.center.platform.profiles.domain.model.valueobjects.EmailAddress;
 import com.acme.center.platform.profiles.domain.repositories.ProfileRepository;
 import com.acme.center.platform.profiles.infrastructure.persistence.jpa.assemblers.ProfilePersistenceAssembler;
 import com.acme.center.platform.profiles.infrastructure.persistence.jpa.repositories.ProfilePersistenceRepository;
-import org.springframework.context.ApplicationEventPublisher;
+import com.acme.center.platform.shared.infrastructure.events.DomainEventPublisher;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -17,19 +17,19 @@ import java.util.Optional;
  *
  * <p>Also acts as the event-publishing boundary: after a brand-new {@link Profile} is
  * persisted (and the JPA-assigned id is therefore available), a {@link ProfileCreatedEvent}
- * is dispatched via Spring's {@link ApplicationEventPublisher}.</p>
+ * is dispatched via {@link DomainEventPublisher}.</p>
  */
 @Repository
 public class ProfileRepositoryImpl implements ProfileRepository {
 
     private final ProfilePersistenceRepository profilePersistenceRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final DomainEventPublisher domainEventPublisher;
 
     public ProfileRepositoryImpl(
             ProfilePersistenceRepository profilePersistenceRepository,
-            ApplicationEventPublisher eventPublisher) {
+            DomainEventPublisher domainEventPublisher) {
         this.profilePersistenceRepository = profilePersistenceRepository;
-        this.eventPublisher = eventPublisher;
+        this.domainEventPublisher = domainEventPublisher;
     }
 
     @Override
@@ -54,8 +54,7 @@ public class ProfileRepositoryImpl implements ProfileRepository {
         var savedProfile = ProfilePersistenceAssembler.toDomainFromPersistence(savedEntity);
         if (isNew) {
             savedProfile.onCreated();
-            savedProfile.domainEvents().forEach(eventPublisher::publishEvent);
-            savedProfile.clearDomainEvents();
+            domainEventPublisher.publishAndClearEvents(savedProfile);
         }
         return savedProfile;
     }

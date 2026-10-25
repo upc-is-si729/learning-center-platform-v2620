@@ -1,40 +1,85 @@
 package com.acme.center.platform.shared.interfaces.rest.transform;
 
 import com.acme.center.platform.shared.application.result.ApplicationError;
-import com.acme.center.platform.shared.interfaces.rest.resources.ErrorResource;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 
+import java.net.URI;
 import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 /**
- * Assembler for converting application errors to HTTP responses.
+ * Assembler for transforming {@link ApplicationError} instances into RFC 9457 {@link ProblemDetail} responses.
  */
 @NullMarked
-public final class ErrorResponseAssembler {
-    private static final String MESSAGES_BASENAME = "messages";
+public final class ProblemDetailFromApplicationErrorAssembler {
 
-    private ErrorResponseAssembler() {
+    private static final String MESSAGES_BASENAME = "messages";
+    private static final String ERROR_TYPE_PREFIX = "/api/v1/errors/";
+
+    private ProblemDetailFromApplicationErrorAssembler() {
     }
 
     /**
-     * Maps an ApplicationError to an appropriate HTTP ResponseEntity.
-     * Automatically selects the correct HTTP status code based on the error code.
+     * Transforms an {@link ApplicationError} into a Spring {@link ProblemDetail}.
      *
-     * @param error the ApplicationError to map
-     * @return a ResponseEntity with the appropriate HTTP status and error resource
+     * @param error the application error to transform
+     * @return the assembled ProblemDetail
      */
-    public static ResponseEntity<ErrorResource> toErrorResponseFromApplicationError(ApplicationError error) {
+    public static ProblemDetail toProblemDetailFromApplicationError(ApplicationError error) {
         HttpStatusCode status = toStatusFromErrorCode(error.code());
         String localizedMessage = toLocalizedMessageFromApplicationError(error);
-        ErrorResource resource = new ErrorResource(error.code(), localizedMessage, error.details());
-        return new ResponseEntity<>(resource, status);
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, localizedMessage);
+        problemDetail.setType(toProblemTypeUri(error.code()));
+        problemDetail.setTitle(toProblemTitle(error.code(), status));
+        problemDetail.setProperty("code", error.code());
+
+        if (error.details() != null && !error.details().isBlank()) {
+            problemDetail.setProperty("details", error.details());
+        }
+
+        return problemDetail;
+    }
+
+    /**
+     * Transforms an {@link ApplicationError} into a {@link ResponseEntity} containing a {@link ProblemDetail}.
+     *
+     * @param error the application error to transform
+     * @return response entity with corresponding HTTP status and ProblemDetail body
+     */
+    public static ResponseEntity<ProblemDetail> toResponseFromApplicationError(ApplicationError error) {
+        ProblemDetail problemDetail = toProblemDetailFromApplicationError(error);
+        return ResponseEntity.status(problemDetail.getStatus()).body(problemDetail);
+    }
+
+    private static URI toProblemTypeUri(String errorCode) {
+        String slug = switch (errorCode) {
+            case "VALIDATION_ERROR" -> "validation-error";
+            case "BUSINESS_RULE_VIOLATION" -> "business-rule-violation";
+            case "UNEXPECTED_ERROR" -> "unexpected-error";
+            case String s when s.endsWith("_NOT_FOUND") -> "not-found";
+            case String s when s.endsWith("_CONFLICT") -> "conflict";
+            default -> errorCode.toLowerCase(Locale.ROOT).replace('_', '-');
+        };
+        return URI.create(ERROR_TYPE_PREFIX + slug);
+    }
+
+    private static String toProblemTitle(String errorCode, HttpStatusCode status) {
+        return switch (errorCode) {
+            case "VALIDATION_ERROR" -> "Validation Error";
+            case "BUSINESS_RULE_VIOLATION" -> "Business Rule Violation";
+            case String s when s.endsWith("_NOT_FOUND") -> "Resource Not Found";
+            case String s when s.endsWith("_CONFLICT") -> "Resource Conflict";
+            default -> status instanceof HttpStatus httpStatus ? httpStatus.getReasonPhrase() : "Error";
+        };
     }
 
     private static String toLocalizedMessageFromApplicationError(ApplicationError error) {
@@ -78,7 +123,7 @@ public final class ErrorResponseAssembler {
         return "resource";
     }
 
-    private static String toLocalizedMessageOrNull(String key, Object... args) {
+    private static @Nullable String toLocalizedMessageOrNull(String key, Object... args) {
         Locale locale = LocaleContextHolder.getLocale();
         try {
             ResourceBundle bundle = ResourceBundle.getBundle(MESSAGES_BASENAME, locale);
@@ -118,7 +163,6 @@ public final class ErrorResponseAssembler {
             case String s when s.endsWith("_NOT_FOUND") -> HttpStatus.NOT_FOUND;
             case "BUSINESS_RULE_VIOLATION" -> HttpStatusCode.valueOf(422);
             case String s when s.endsWith("_CONFLICT") -> HttpStatus.CONFLICT;
-            case "UNEXPECTED_ERROR" -> HttpStatus.INTERNAL_SERVER_ERROR;
             default -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
     }

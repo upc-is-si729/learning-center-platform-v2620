@@ -19,7 +19,7 @@ public final class ResponseEntityAssembler {
 
     /**
      * Converts a Result into an HTTP response using the provided success resource assembler.
-     * Failure responses are delegated to ErrorResponseAssembler.
+     * Failure responses are delegated to ProblemDetailFromApplicationErrorAssembler.
      *
      * @param result the application result
      * @param successResourceAssembler function that maps success value to response resource
@@ -37,7 +37,7 @@ public final class ResponseEntityAssembler {
             case Result.Success<T, ApplicationError> success ->
                     new ResponseEntity<>(successResourceAssembler.apply(success.value()), successStatus);
             case Result.Failure<T, ApplicationError> failure ->
-                    ErrorResponseAssembler.toErrorResponseFromApplicationError(failure.error());
+                    ProblemDetailFromApplicationErrorAssembler.toResponseFromApplicationError(failure.error());
         };
     }
 }

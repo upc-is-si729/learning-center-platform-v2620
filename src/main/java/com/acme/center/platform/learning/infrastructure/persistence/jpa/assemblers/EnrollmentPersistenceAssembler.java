@@ -19,26 +19,29 @@ public final class EnrollmentPersistenceAssembler {
     public static Enrollment toDomainFromPersistence(EnrollmentPersistenceEntity entity) {
         if (entity == null) return null;
 
-        var enrollment = new Enrollment();
-        enrollment.setId(entity.getId());
-        enrollment.setAcmeStudentRecordId(entity.getAcmeStudentRecordId());
-        enrollment.setCourse(CoursePersistenceAssembler.toDomainFromPersistence(entity.getCourse()));
-        enrollment.setStatus(entity.getStatus());
-
         var progressRecord = new ProgressRecord();
         var progressItems = new ArrayList<ProgressRecordItem>();
-        for (var item : entity.getProgressRecordItems()) {
-            var progressRecordItem = new ProgressRecordItem();
-            progressRecordItem.setId(item.getId());
-            progressRecordItem.setEnrollment(enrollment);
-            progressRecordItem.setTutorialId(item.getTutorialId());
-            progressRecordItem.setStatus(item.getStatus());
-            progressRecordItem.setStatedAt(item.getStatedAt());
-            progressRecordItem.setCompletedAt(item.getCompletedAt());
-            progressItems.add(progressRecordItem);
+
+        var enrollment = Enrollment.reconstitute(
+                entity.getId(),
+                entity.getAcmeStudentRecordId(),
+                entity.getCourseId(),
+                entity.getStatus(),
+                progressRecord);
+
+        if (entity.getProgressRecordItems() != null) {
+            for (var item : entity.getProgressRecordItems()) {
+                var progressRecordItem = ProgressRecordItem.reconstitute(
+                        item.getId(),
+                        enrollment,
+                        item.getTutorialId(),
+                        item.getStatus(),
+                        item.getStatedAt(),
+                        item.getCompletedAt());
+                progressItems.add(progressRecordItem);
+            }
         }
         progressRecord.setProgressRecordItems(progressItems);
-        enrollment.setProgressRecord(progressRecord);
 
         return enrollment;
     }
@@ -53,7 +56,7 @@ public final class EnrollmentPersistenceAssembler {
             entity.setId(enrollment.getId());
         }
         entity.setAcmeStudentRecordId(enrollment.getAcmeStudentRecordId());
-        entity.setCourse(CoursePersistenceAssembler.toPersistenceFromDomain(enrollment.getCourse()));
+        entity.setCourseId(enrollment.getCourseId());
         entity.setStatus(enrollment.getStatus());
 
         var progressItems = new ArrayList<ProgressRecordItemPersistenceEntity>();

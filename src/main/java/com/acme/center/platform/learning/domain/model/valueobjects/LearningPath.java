@@ -7,7 +7,9 @@ import lombok.Getter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Gatherers;
 
 /**
  * LearningPath value object.
@@ -64,7 +66,9 @@ public class LearningPath {
      * @return The ID of the next tutorial if it exists, null otherwise.
      */
     public TutorialId getNextTutorialInLearningPath(TutorialId currentTutorialId) {
-        LearningPathItem nextItem = getLearningPathItemWithTutorialId(currentTutorialId).getNextItem();
+        LearningPathItem item = getLearningPathItemWithTutorialId(currentTutorialId);
+        if (item == null) return null;
+        LearningPathItem nextItem = item.getNextItem();
         return !Objects.isNull(nextItem) ? nextItem.getTutorialId() : null;
     }
 
@@ -82,15 +86,49 @@ public class LearningPath {
      * @return The ID of the first tutorial.
      */
     public TutorialId getFirstTutorialInLearningPath() {
-        return learningPathItems.getFirst().getTutorialId();
+        return isEmpty() ? null : learningPathItems.getFirst().getTutorialId();
     }
 
     /**
-     * Gets the last item in the learning path.
-     * @return The last learning path item.
+     * Gets the last item in the learning path using SequencedCollection.
+     * @return The last learning path item, or null if empty.
      */
     public LearningPathItem getLastItemInLearningPath() {
-        return this.getFirstLearningPathItemWhere(item -> Objects.isNull(item.getNextItem()));
+        return isEmpty() ? null : learningPathItems.getLast();
+    }
+
+    /**
+     * Gets the previous learning path item before the specified tutorial using reverse sequenced traversal.
+     *
+     * @param tutorialId the tutorial ID
+     * @return optional containing the previous LearningPathItem if present
+     */
+    public Optional<LearningPathItem> getPreviousItem(TutorialId tutorialId) {
+        LearningPathItem target = null;
+        for (LearningPathItem item : learningPathItems.reversed()) {
+            if (target != null) {
+                return Optional.of(item);
+            }
+            if (item.getTutorialId().equals(tutorialId)) {
+                target = item;
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Verifies that consecutive elements in the learning path maintain proper forward linking
+     * using Stream Gatherers sliding window.
+     *
+     * @return true if the sequence is consistent, false otherwise
+     */
+    public boolean isSequenceConsistent() {
+        if (learningPathItems.size() < 2) {
+            return true;
+        }
+        return learningPathItems.stream()
+                .gather(Gatherers.windowSliding(2))
+                .allMatch(window -> window.getFirst().getNextItem() == window.getLast());
     }
 
     /**
@@ -125,14 +163,13 @@ public class LearningPath {
     }
 
     /**
-     * Adds a new item to the end of the learning path.
+     * Adds a new item to the end of the learning path using SequencedCollection.
      * @param course The course the item belongs to.
      * @param tutorialId The ID of the tutorial to add.
      */
     public void addItem(Course course, TutorialId tutorialId) {
         LearningPathItem learningPathItem = new LearningPathItem(course, tutorialId, null);
-        LearningPathItem originalLastItem = null;
-        if (!isEmpty()) originalLastItem = getLastItemInLearningPath();
+        LearningPathItem originalLastItem = !isEmpty() ? learningPathItems.getLast() : null;
         learningPathItems.add(learningPathItem);
         if (!Objects.isNull(originalLastItem)) originalLastItem.updateNextItem(learningPathItem);
     }

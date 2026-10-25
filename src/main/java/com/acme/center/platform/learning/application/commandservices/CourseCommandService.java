@@ -22,7 +22,7 @@ public interface CourseCommandService {
     Result<Long, ApplicationError> handle(CreateCourseCommand command);
 
     /**
-     * Handles course update.
+     * Handler for course update.
      *
      * @param command command containing target course id and new data
      * @return updated course aggregate or an application error

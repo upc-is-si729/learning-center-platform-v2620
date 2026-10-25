@@ -9,7 +9,6 @@ import java.util.List;
  * Role domain entity.
  */
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @With

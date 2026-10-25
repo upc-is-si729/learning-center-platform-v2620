@@ -25,7 +25,6 @@ public class ProgressRecordItem {
     /**
      * The unique identifier for the progress record item.
      */
-    @Setter
     private Long id;
 
     /**
@@ -37,25 +36,21 @@ public class ProgressRecordItem {
     /**
      * The ID of the tutorial associated with this progress record item.
      */
-    @Setter
     private TutorialId tutorialId;
 
     /**
      * The current status of the tutorial progress.
      */
-    @Setter
     private ProgressStatus status;
 
     /**
      * The date and time when the tutorial was started.
      */
-    @Setter
     private Date statedAt;
 
     /**
      * The date and time when the tutorial was completed.
      */
-    @Setter
     private Date completedAt;
 
     /**
@@ -71,11 +66,29 @@ public class ProgressRecordItem {
     }
 
     /**
-     * Default constructor for ProgressRecordItem.
-     * Required for reconstruction from persistence.
+     * Reconstitutes an existing ProgressRecordItem from persistence.
+     *
+     * @param id The unique identifier.
+     * @param enrollment The associated enrollment.
+     * @param tutorialId The tutorial ID.
+     * @param status The progress status.
+     * @param statedAt The start date.
+     * @param completedAt The completion date.
+     * @return The reconstituted ProgressRecordItem.
      */
-    public ProgressRecordItem() {
-        // Required for reconstruction
+    public static ProgressRecordItem reconstitute(
+            Long id,
+            Enrollment enrollment,
+            TutorialId tutorialId,
+            ProgressStatus status,
+            Date statedAt,
+            Date completedAt) {
+        var item = new ProgressRecordItem(enrollment, tutorialId);
+        item.id = id;
+        item.status = status;
+        item.statedAt = statedAt;
+        item.completedAt = completedAt;
+        return item;
     }
 
     /**

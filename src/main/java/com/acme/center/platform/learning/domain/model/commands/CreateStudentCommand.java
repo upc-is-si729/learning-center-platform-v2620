@@ -2,7 +2,7 @@ package com.acme.center.platform.learning.domain.model.commands;
 
 /**
  * Command to create a student
- * @param firstName the student first name.
+ * @param firstName the student's first name.
  *                  Cannot be null or blank
  * @param lastName the student last name.
  *                 Cannot be null or blank
@@ -22,7 +22,7 @@ package com.acme.center.platform.learning.domain.model.commands;
 public record CreateStudentCommand(String firstName, String lastName, String email, String street, String number, String city, String postalCode, String country) {
     /**
      * Constructor
-     * @param firstName the student first name.
+     * @param firstName the student's first name.
      *                  Cannot be null or blank
      * @param lastName the student last name.
      *                 Cannot be null or blank
@@ -38,14 +38,14 @@ public record CreateStudentCommand(String firstName, String lastName, String ema
      *                 Cannot be null or blank
      * @param country the student country.
      *              Cannot be null or blank
-     * @throws IllegalArgumentException if firstName is null or blank
-     * @throws IllegalArgumentException if lastName is null or blank
-     * @throws IllegalArgumentException if email is null or blank
-     * @throws IllegalArgumentException if street is null or blank
-     * @throws IllegalArgumentException if number is null or blank
-     * @throws IllegalArgumentException if city is null or blank
-     * @throws IllegalArgumentException if postalCode is null or blank
-     * @throws IllegalArgumentException if country is null or blank
+     * @throws IllegalArgumentException if the student's firstName is null or blank
+     * @throws IllegalArgumentException if the student's lastName is null or blank
+     * @throws IllegalArgumentException if the student's email is null or blank
+     * @throws IllegalArgumentException if the student's street is null or blank
+     * @throws IllegalArgumentException if the student's number is null or blank
+     * @throws IllegalArgumentException if the student's city is null or blank
+     * @throws IllegalArgumentException if the student's postalCode is null or blank
+     * @throws IllegalArgumentException if the student's country is null or blank
      */
 
     public CreateStudentCommand {

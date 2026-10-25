@@ -5,7 +5,6 @@ import com.acme.center.platform.learning.domain.model.valueobjects.LearningPath;
 import com.acme.center.platform.learning.domain.model.valueobjects.TutorialId;
 import com.acme.center.platform.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
 import lombok.Getter;
-import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;
 
 /**
@@ -21,19 +20,16 @@ public class Course extends AbstractDomainAggregateRoot<Course> {
     /**
      * The unique identifier for the course.
      */
-    @Setter
     private Long id;
 
     /**
      * The title of the course.
      */
-    @Setter
     private String title;
 
     /**
      * The description of the course.
      */
-    @Setter
     private String description;
 
     /**
@@ -49,6 +45,33 @@ public class Course extends AbstractDomainAggregateRoot<Course> {
         this.title = Strings.EMPTY;
         this.description = Strings.EMPTY;
         this.learningPath = new LearningPath();
+    }
+
+    /**
+     * Constructor for Course with title and description.
+     * @param title The title.
+     * @param description The description.
+     */
+    public Course(String title, String description) {
+        this.title = title != null ? title : Strings.EMPTY;
+        this.description = description != null ? description : Strings.EMPTY;
+        this.learningPath = new LearningPath();
+    }
+
+    /**
+     * Reconstitutes an existing course from persistence state.
+     *
+     * @param id The unique identifier.
+     * @param title The title.
+     * @param description The description.
+     * @param learningPath The learning path.
+     * @return The reconstituted Course instance.
+     */
+    public static Course reconstitute(Long id, String title, String description, LearningPath learningPath) {
+        var course = new Course(title, description);
+        course.id = id;
+        course.learningPath = learningPath != null ? learningPath : new LearningPath();
+        return course;
     }
 
     /**

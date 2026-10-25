@@ -4,6 +4,7 @@ import com.acme.center.platform.learning.domain.model.aggregates.Course;
 import com.acme.center.platform.learning.domain.repositories.CourseRepository;
 import com.acme.center.platform.learning.infrastructure.persistence.jpa.assemblers.CoursePersistenceAssembler;
 import com.acme.center.platform.learning.infrastructure.persistence.jpa.repositories.CoursePersistenceRepository;
+import com.acme.center.platform.shared.infrastructure.events.DomainEventPublisher;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -16,9 +17,13 @@ import java.util.Optional;
 public class CourseRepositoryImpl implements CourseRepository {
 
     private final CoursePersistenceRepository coursePersistenceRepository;
+    private final DomainEventPublisher domainEventPublisher;
 
-    public CourseRepositoryImpl(CoursePersistenceRepository coursePersistenceRepository) {
+    public CourseRepositoryImpl(
+            CoursePersistenceRepository coursePersistenceRepository,
+            DomainEventPublisher domainEventPublisher) {
         this.coursePersistenceRepository = coursePersistenceRepository;
+        this.domainEventPublisher = domainEventPublisher;
     }
 
     @Override
@@ -39,7 +44,9 @@ public class CourseRepositoryImpl implements CourseRepository {
     @Override
     public Course save(Course course) {
         var saved = coursePersistenceRepository.save(CoursePersistenceAssembler.toPersistenceFromDomain(course));
-        return CoursePersistenceAssembler.toDomainFromPersistence(saved);
+        var savedCourse = CoursePersistenceAssembler.toDomainFromPersistence(saved);
+        domainEventPublisher.publishAndClearEvents(course);
+        return savedCourse;
     }
 
     @Override
