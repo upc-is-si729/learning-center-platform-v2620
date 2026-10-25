@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Application service contract for course read queries.
+ * Application service contract for `course` read queries.
  */
 public interface CourseQueryService {
     /**

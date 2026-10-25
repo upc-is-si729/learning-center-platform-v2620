@@ -8,7 +8,7 @@ import com.acme.center.platform.learning.domain.model.queries.GetStudentByProfil
 import java.util.Optional;
 
 /**
- * Application service contract for student read queries.
+ * Application service contract for `student` read queries.
  */
 public interface StudentQueryService {
     /**
