@@ -1,12 +1,12 @@
 # ACME Learning Center Platform
 
-ACME Learning Center Platform is a state-of-the-art RESTful API built on the foundations of Domain-Driven Design (DDD). Developed with Java 27 / 26, Spring Boot 4.1.1, and MySQL, the platform provides a robust and scalable solution for managing educational ecosystems. It features a modular architecture organized into bounded contexts and strictly adheres to Command Query Responsibility Segregation (CQRS) principles, ensuring a clean separation between data modification and retrieval operations.
+ACME Learning Center Platform is a state-of-the-art RESTful API built on the foundations of Domain-Driven Design (DDD). Developed with Java 27, Spring Boot 4.1.1, and MySQL, the platform provides a robust and scalable solution for managing educational ecosystems. It features a modular architecture organized into bounded contexts and strictly adheres to Command Query Responsibility Segregation (CQRS) principles, ensuring a clean separation between data modification and retrieval operations.
 
 ---
 
 ## Tech Stack
 
-- **Language:** Java 27 / Java 26 (with Project Loom Virtual Threads, Sequenced Collections, and Stream Gatherers)
+- **Language:** Java 27 (with Project Loom Virtual Threads, Sequenced Collections, and Stream Gatherers)
 - **Framework:** Spring Boot 4.1.1
 - **Database:** MySQL 8+
 - **Persistence:** Spring Data JPA / Hibernate with Physical Snake Case Naming Strategy
@@ -21,7 +21,7 @@ ACME Learning Center Platform is a state-of-the-art RESTful API built on the fou
 
 ## Prerequisites
 
-- Java 26+ / Java 27 JDK
+- Java 27 JDK
 - Maven 3.9+
 - MySQL 8.0+
 - Docker (optional)
@@ -125,7 +125,7 @@ Once running, access the interactive documentation at:
 - `mvn package`: Package the application into a JAR file.
 - `mvn spring-boot:run`: Launch the application.
 
-Note: `.mvn/jvm.config` includes `--sun-misc-unsafe-memory-access=allow` to suppress Java 26 terminal deprecation warnings.
+Note: Fully configured for Java 27 with Project Loom virtual threads enabled.
 
 ---
 

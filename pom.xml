@@ -12,7 +12,7 @@
     <artifactId>platform</artifactId>
     <version>1.0.0</version>
     <name>ACME Learning Platform</name>
-    <description>ACME Learning Center Platform is a state-of-the-art RESTful API built on the foundations of Domain-Driven Design (DDD). Developed with Java 26, Spring Boot 4, and MySQL, the platform provides a robust and scalable solution for managing educational ecosystems.</description>
+    <description>ACME Learning Center Platform is a state-of-the-art RESTful API built on the foundations of Domain-Driven Design (DDD). Developed with Java 27, Spring Boot 4, and MySQL, the platform provides a robust and scalable solution for managing educational ecosystems.</description>
     <url/>
     <licenses>
         <license/>

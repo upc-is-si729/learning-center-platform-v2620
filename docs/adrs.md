@@ -281,4 +281,4 @@ Linked item traversal in `LearningPath` (finding last items, checking sequence c
 
 ### Consequences
 - **Positive**: $O(1)$ access for terminal elements, declarative domain invariant assertions, expressive cumulative calculations without mutable external state.
-- **Negative**: Requires modern Java runtime (Java 21+ / Java 26+).
+- **Negative**: Requires modern Java runtime (Java 27+).

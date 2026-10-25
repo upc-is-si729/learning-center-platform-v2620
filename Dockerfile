@@ -1,9 +1,9 @@
 # Dockerfile for learning-center-platform
 # Summary:
-# This Dockerfile builds and run the learning-center-platform application using Maven and OpenJDK 26.
+# This Dockerfile builds and run the learning-center-platform application using Maven and OpenJDK 27.
 # Description:
 # This Dockerfile is designed to build a Spring Boot application using Maven and run it in a lightweight
-# OpenJDK 26 environment. It uses a multi-stage build to keep the final image size small by separating the build
+# OpenJDK 27 environment. It uses a multi-stage build to keep the final image size small by separating the build
 # and runtime environments. It sets the active Spring profile to 'prod' for production use and exposes port 8080,
 # which is the default port for Spring Boot applications.
 # Version: 1.0
@@ -11,23 +11,20 @@
 
 # Step 1: Build the application using Maven
 
-# Use a Maven image with Temurin JDK 26 for builds
-FROM maven:3.9.11-eclipse-temurin-26 AS build
+# Use a Maven image with Temurin JDK 27 for builds
+FROM maven:3.9.11-eclipse-temurin-27 AS build
 # Set the working directory inside the container
 WORKDIR /app
-COPY .mvn .mvn
-COPY mvnw .
 COPY pom.xml .
-RUN chmod +x mvnw
-RUN ./mvnw dependency:go-offline
+RUN mvn dependency:go-offline
 # Copy the Maven project files into the container
 COPY src ./src
 # Build the application
-RUN ./mvnw clean package -DskipTests
+RUN mvn clean package -DskipTests
 
 # Step 2: Create a runtime image
 # Copy the Spring Boot JAR file into the container
-FROM eclipse-temurin:26-jre AS runtime
+FROM eclipse-temurin:27-jre AS runtime
 ENV SPRING_PROFILES_ACTIVE=prod
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
