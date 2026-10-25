@@ -56,8 +56,9 @@ class LocalizedErrorResponseWebMvcTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.code").value("UNEXPECTED_ERROR"))
-                .andExpect(jsonPath("$.message").value("Error inesperado"))
-                .andExpect(jsonPath("$.details").value("boom"));
+                .andExpect(jsonPath("$.detail").value("Error inesperado"))
+                .andExpect(jsonPath("$.details").value("boom"))
+                .andExpect(jsonPath("$.type").value("/api/v1/errors/unexpected-error"));
     }
 
     @Test
@@ -67,8 +68,9 @@ class LocalizedErrorResponseWebMvcTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.code").value("UNEXPECTED_ERROR"))
-                .andExpect(jsonPath("$.message").value("Unexpected error"))
-                .andExpect(jsonPath("$.details").value("boom"));
+                .andExpect(jsonPath("$.detail").value("Unexpected error"))
+                .andExpect(jsonPath("$.details").value("boom"))
+                .andExpect(jsonPath("$.type").value("/api/v1/errors/unexpected-error"));
     }
 
     @Test
@@ -80,8 +82,11 @@ class LocalizedErrorResponseWebMvcTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Validacion fallida"))
-                .andExpect(jsonPath("$.details").value("Campo name: es obligatorio"));
+                .andExpect(jsonPath("$.detail").value("Validacion fallida"))
+                .andExpect(jsonPath("$.details").value("Campo name: es obligatorio"))
+                .andExpect(jsonPath("$.type").value("/api/v1/errors/validation-error"))
+                .andExpect(jsonPath("$.invalidParams[0].field").value("name"))
+                .andExpect(jsonPath("$.invalidParams[0].message").value("es obligatorio"));
     }
 
     @Test
@@ -91,8 +96,9 @@ class LocalizedErrorResponseWebMvcTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.code").value("UNEXPECTED_ERROR"))
-                .andExpect(jsonPath("$.message").value("Unexpected error"))
-                .andExpect(jsonPath("$.details").value("boom"));
+                .andExpect(jsonPath("$.detail").value("Unexpected error"))
+                .andExpect(jsonPath("$.details").value("boom"))
+                .andExpect(jsonPath("$.type").value("/api/v1/errors/unexpected-error"));
     }
 
     @Test
@@ -102,8 +108,9 @@ class LocalizedErrorResponseWebMvcTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Validation failed"))
-                .andExpect(jsonPath("$.details").value("Student record id must be a valid UUID"));
+                .andExpect(jsonPath("$.detail").value("Validation failed"))
+                .andExpect(jsonPath("$.details").value("Student record id must be a valid UUID"))
+                .andExpect(jsonPath("$.type").value("/api/v1/errors/validation-error"));
     }
 
     @RestController
