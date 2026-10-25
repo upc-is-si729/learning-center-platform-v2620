@@ -1,13 +1,11 @@
 package com.acme.center.platform.learning.domain.model.aggregates;
 
 import com.acme.center.platform.learning.domain.model.events.TutorialCompletedEvent;
-import com.acme.center.platform.learning.domain.model.valueobjects.AcmeStudentRecordId;
-import com.acme.center.platform.learning.domain.model.valueobjects.EnrollmentStatus;
-import com.acme.center.platform.learning.domain.model.valueobjects.ProgressRecord;
-import com.acme.center.platform.learning.domain.model.valueobjects.TutorialId;
+import com.acme.center.platform.learning.domain.model.valueobjects.*;
 import com.acme.center.platform.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
 import lombok.Getter;
-import lombok.Setter;
+
+import java.util.Objects;
 
 /**
  * Enrollment aggregate root.
@@ -28,9 +26,9 @@ public class Enrollment extends AbstractDomainAggregateRoot<Enrollment> {
     private AcmeStudentRecordId acmeStudentRecordId;
 
     /**
-     * The course in which the student is enrolled.
+     * The course ID in which the student is enrolled.
      */
-    private Course course;
+    private CourseId courseId;
 
     /**
      * The progress record for the enrollment, tracking tutorial completion.
@@ -53,11 +51,11 @@ public class Enrollment extends AbstractDomainAggregateRoot<Enrollment> {
      * Constructor for Enrollment.
      * Initializes a new enrollment with the REQUESTED status and an empty progress record.
      * @param acmeStudentRecordId The Acme Student Record ID of the student.
-     * @param course The course for the enrollment.
+     * @param courseId The course ID for the enrollment.
      */
-    public Enrollment(AcmeStudentRecordId acmeStudentRecordId, Course course) {
-        this.acmeStudentRecordId = acmeStudentRecordId;
-        this.course = course;
+    public Enrollment(AcmeStudentRecordId acmeStudentRecordId, CourseId courseId) {
+        this.acmeStudentRecordId = Objects.requireNonNull(acmeStudentRecordId, "studentRecordId is required");
+        this.courseId = Objects.requireNonNull(courseId, "courseId is required");
         this.status = EnrollmentStatus.REQUESTED;
         this.progressRecord = new ProgressRecord();
     }
@@ -67,7 +65,7 @@ public class Enrollment extends AbstractDomainAggregateRoot<Enrollment> {
      *
      * @param id The unique identifier.
      * @param acmeStudentRecordId The Acme Student Record ID.
-     * @param course The course for the enrollment.
+     * @param courseId The course ID for the enrollment.
      * @param status The current enrollment status.
      * @param progressRecord The progress record.
      * @return The reconstituted Enrollment instance.
@@ -75,10 +73,10 @@ public class Enrollment extends AbstractDomainAggregateRoot<Enrollment> {
     public static Enrollment reconstitute(
             Long id,
             AcmeStudentRecordId acmeStudentRecordId,
-            Course course,
+            CourseId courseId,
             EnrollmentStatus status,
             ProgressRecord progressRecord) {
-        var enrollment = new Enrollment(acmeStudentRecordId, course);
+        var enrollment = new Enrollment(acmeStudentRecordId, courseId);
         enrollment.id = id;
         enrollment.status = status;
         enrollment.progressRecord = progressRecord != null ? progressRecord : new ProgressRecord();
@@ -87,11 +85,13 @@ public class Enrollment extends AbstractDomainAggregateRoot<Enrollment> {
 
     /**
      * Confirms the enrollment.
-     * Changes the status to CONFIRMED and initializes the progress record based on the course's learning path.
+     * Changes the status to CONFIRMED and initializes the progress record based on the provided learning path.
+     *
+     * @param learningPath The learning path of the course.
      */
-    public void confirm() {
+    public void confirm(LearningPath learningPath) {
         this.status = EnrollmentStatus.CONFIRMED;
-        this.progressRecord.initializeProgressRecord(this, course.getLearningPath());
+        this.progressRecord.initializeProgressRecord(this, learningPath);
     }
 
     /**
@@ -154,9 +154,10 @@ public class Enrollment extends AbstractDomainAggregateRoot<Enrollment> {
      * Marks a tutorial as completed for this enrollment.
      * Registers a TutorialCompletedEvent.
      * @param tutorialId The ID of the tutorial to complete.
+     * @param learningPath The learning path of the course.
      */
-    public void completeTutorial(TutorialId tutorialId) {
-        this.progressRecord.completeTutorial(tutorialId, course.getLearningPath());
+    public void completeTutorial(TutorialId tutorialId, LearningPath learningPath) {
+        this.progressRecord.completeTutorial(tutorialId, learningPath);
         this.registerDomainEvent(new TutorialCompletedEvent(this, this.getId(), tutorialId));
     }
 }
