@@ -132,9 +132,9 @@ Note: Fully configured for Java 27 with Project Loom virtual threads enabled.
 ## API Surface
 
 ### IAM (Identity and Access Management)
-- `POST /api/v1/authentication/sign-up`: Register a new user.
-- `POST /api/v1/authentication/sign-in`: Authenticate and get a JWT.
-- `/api/v1/users`: User management.
+- `POST /api/v1/users`: Register a new user (Sign-up).
+- `POST /api/v1/tokens`: Authenticate and obtain a JWT token (Sign-in).
+- `GET /api/v1/users`: User query and management.
 - `/api/v1/roles`: Role management.
 
 ### Learning

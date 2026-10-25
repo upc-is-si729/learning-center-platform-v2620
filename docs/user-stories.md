@@ -14,11 +14,11 @@ Common conventions
 ### TS-ARCH001 — Authenticate API Requests with a JWT Bearer Token
 As a frontend developer, I want to include the JWT token in my API requests so that I can access protected endpoints after signing in.
 
-Note: Only `/api/v1/authentication/sign-in` and `/api/v1/authentication/sign-up` are publicly accessible without a token. All other endpoints require authentication.
+Note: Only `POST /api/v1/tokens` (sign-in) and `POST /api/v1/users` (sign-up) are publicly accessible without a token. All other endpoints require authentication.
 
 Acceptance criteria:
 - Scenario: Authenticated request succeeds
-  - Given the client received a token via `POST /api/v1/authentication/sign-in`
+  - Given the client received a token via `POST /api/v1/tokens`
   - When the client sends any request to a protected endpoint with the header `Authorization: Bearer <token>`
   - Then the API processes the request normally and responds with the expected resource.
 - Scenario: Missing token
@@ -297,15 +297,15 @@ As a frontend developer, I want to create a new user account through the API so 
 
 Acceptance criteria:
 - Scenario: Successful sign-up
-  - Given a POST `/api/v1/authentication/sign-up` with request attributes: username (String), password (String), roles (List<String>)
+  - Given a POST `/api/v1/users` with request attributes: username (String), password (String), roles (List<String>)
   - When the API validates the request and creates the user
   - Then the API responds `201 Created` and returns the created user with attributes: id (Long), username (String), roles (List<String>).
 - Scenario: Validation error
-  - Given a POST `/api/v1/authentication/sign-up` with missing or invalid attributes (e.g., blank username or password)
+  - Given a POST `/api/v1/users` with missing or invalid attributes (e.g., blank username or password)
   - When the API validates the request and detects validation errors
   - Then the API responds `400 Bad Request` and returns an error payload describing validation issues.
 - Scenario: Duplicate username or create failure
-  - Given a POST `/api/v1/authentication/sign-up` with a username that already exists or the creation fails
+  - Given a POST `/api/v1/users` with a username that already exists or the creation fails
   - When the user creation cannot be completed
   - Then the API responds `409 Conflict` and returns an error payload explaining the failure.
 
@@ -316,15 +316,15 @@ As a frontend developer, I want to sign in users through the API so that I can g
 
 Acceptance criteria:
 - Scenario: Successful sign-in
-  - Given a POST `/api/v1/authentication/sign-in` with credentials attributes: username (String), password (String)
+  - Given a POST `/api/v1/tokens` with credentials attributes: username (String), password (String)
   - When the API validates credentials successfully
   - Then the API responds `200 OK` and returns the authenticated user with attributes: id (Long), username (String), token (String).
 - Scenario: Invalid credentials or malformed request
-  - Given a POST `/api/v1/authentication/sign-in` with invalid credentials or malformed request
+  - Given a POST `/api/v1/tokens` with invalid credentials or malformed request
   - When the API fails to validate the credentials or request structure
   - Then the API responds `400 Bad Request` and returns an error payload describing the validation error.
 - Scenario: User not found
-  - Given a POST `/api/v1/authentication/sign-in` with a non-existent username
+  - Given a POST `/api/v1/tokens` with a non-existent username
   - When the API cannot find the user
   - Then the API responds `404 Not Found` and returns an error payload.
 
