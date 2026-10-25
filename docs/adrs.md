@@ -6,7 +6,7 @@ This document maintains Architecture Decision Records (ADRs) for the **ACME Lear
 
 ## Index
 
-- [ADR-001: Modular Monolith with Hexagonal Architecture and Domain-Driven Design](#adr-001-modular-monolith-with-hexagonal-architecture-and-domain-driven-design)
+- [ADR-001: Modular Monolith with Layered Architecture and Domain-Driven Design](#adr-001-modular-monolith-with-layered-architecture-and-domain-driven-design)
 - [ADR-002: Aggregate Invariant Encapsulation and Reconstitution Factory Pattern](#adr-002-aggregate-invariant-encapsulation-and-reconstitution-factory-pattern)
 - [ADR-003: Standardized Domain Event Dispatching via DomainEventPublisher](#adr-003-standardized-domain-event-dispatching-via-domaineventpublisher)
 - [ADR-004: Aggregate References by Identity (CourseId)](#adr-004-aggregate-references-by-identity-courseid)
@@ -16,7 +16,7 @@ This document maintains Architecture Decision Records (ADRs) for the **ACME Lear
 
 ---
 
-## ADR-001: Modular Monolith with Hexagonal Architecture and Domain-Driven Design
+## ADR-001: Modular Monolith with Layered Architecture and Domain-Driven Design
 
 ### Status
 Accepted
@@ -25,7 +25,7 @@ Accepted
 The platform requires clear boundaries between distinct business domains (IAM, Student Profiles, Learning Lifecycle) while maintaining development velocity, transactional simplicity, and operational manageability without the distributed systems overhead of microservices.
 
 ### Decision
-We structure the system as a **Modular Monolith** applying **Domain-Driven Design (DDD)** and **Hexagonal Architecture (Ports and Adapters)**:
+We structure the system as a **Modular Monolith** applying **Domain-Driven Design (DDD)** and **Classic 4-Layer Architecture**:
 1. **Bounded Contexts**: `iam`, `profiles`, `learning`, and `shared`.
 2. **Layer Separation**: Each context defines `domain`, `application`, `infrastructure`, and `interfaces`.
 3. **Decoupled Persistence**: Domain aggregates are pure Java classes decoupled from JPA `@Entity` annotations. Persistence entities (`*PersistenceEntity`) reside solely in `infrastructure`.
@@ -33,7 +33,7 @@ We structure the system as a **Modular Monolith** applying **Domain-Driven Desig
 
 ### Consequences
 - **Positive**: Strict domain boundaries, high testability of business logic without database dependencies, clean evolution path toward independent services if needed.
-- **Negative**: Requires mapping layers (`*PersistenceAssembler`, `*ResourceAssembler`) between domain models, persistence entities, and REST DTOs.
+- **Negative**: Requires mapping layers (`*PersistenceAssembler`, `*ResourceAssembler`) between domain models, persistence entities, and REST resources.
 
 ---
 

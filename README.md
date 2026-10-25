@@ -30,7 +30,7 @@ ACME Learning Center Platform is a state-of-the-art RESTful API built on the fou
 
 ## Project Structure
 
-The project is organized into bounded contexts following DDD and Hexagonal Architecture:
+The project is organized into bounded contexts following Layered Domain-Driven Design (DDD):
 
 ```text
 src/main/java/com/acme/center/platform/
@@ -40,11 +40,11 @@ src/main/java/com/acme/center/platform/
 └── shared/     # Shared kernel (Domain base aggregate, Result type, ProblemDetail, Concurrency, i18n)
 ```
 
-Each bounded context follows a 4-layer Ports and Adapters structure:
+Each bounded context follows a classic 4-layer structure:
 - `domain`: Aggregates, entities, value objects, domain events, and repository port interfaces.
 - `application`: Command services, query services, internal implementations, event handlers, and outbound ACL ports.
 - `infrastructure`: JPA persistence entities, repository adapters, assemblers, security configurations, and technology adapters.
-- `interfaces`: REST controllers, DTO resources, request/response assemblers, and ACL facades.
+- `interfaces`: REST controllers, resources, request/response assemblers, and ACL facades.
 
 ---
 

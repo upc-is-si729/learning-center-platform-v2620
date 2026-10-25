@@ -12,14 +12,14 @@ We are committed to providing a welcoming, inclusive, and professional environme
 
 ## 2. Architecture & Design Principles
 
-The platform is designed as a **Modular Monolith** using **Domain-Driven Design (DDD)** and **Hexagonal Architecture (Ports and Adapters)**:
+The platform is designed as a **Modular Monolith** using **Layered Domain-Driven Design (DDD)**:
 
 - **Bounded Contexts**: All business features reside in dedicated context packages (`iam`, `profiles`, `learning`, or `shared`).
 - **Layer Isolation**:
   - `domain`: Contains pure aggregates, entities, value objects, domain events, and repository interfaces. Must not depend on Spring or JPA annotations.
   - `application`: Coordinates use cases via Command Services and Query Services. Contains event handlers and inbound ACL ports.
   - `infrastructure`: Implements persistence adapters (`*RepositoryImpl`), JPA entities (`*PersistenceEntity`), security configurations, and external integrations. Packaging follows `infrastructure.<technology-type>.<manufacturer-technology-name>.configuration`.
-  - `interfaces`: REST controllers, DTO resources, request/response assemblers following `[Target]From[Source]Assembler` naming, and ACL facades.
+  - `interfaces`: REST controllers, resources, request/response assemblers following `[Target]From[Source]Assembler` naming, and ACL facades.
 - **Aggregate Encapsulation**: Do NOT use Lombok `@Setter` on aggregates or entities. Expose intention-revealing domain methods and provide `reconstitute(...)` static factories for persistence rehydration.
 - **Identity Referencing**: Aggregates must reference other aggregates by their strongly-typed identity value objects (e.g., `CourseId`, `AcmeStudentRecordId`, `ProfileId`), never by direct object references.
 - **Error Handling**: Use `Result<T, ApplicationError>` in application layers and `ProblemDetailFromApplicationErrorAssembler` in REST controllers to return RFC 9457 `ProblemDetail` responses.
