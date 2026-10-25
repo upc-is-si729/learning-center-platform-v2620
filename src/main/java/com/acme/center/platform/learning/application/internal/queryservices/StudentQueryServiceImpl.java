@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 /**
- * Application service that resolves student read queries.
+ * Application service that resolves `student` read queries.
  */
 @Service
 public class StudentQueryServiceImpl implements StudentQueryService {
