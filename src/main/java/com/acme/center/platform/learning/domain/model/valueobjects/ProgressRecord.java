@@ -6,6 +6,8 @@ import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Gatherers;
 
 /**
  * ProgressRecord value object.
@@ -20,7 +22,6 @@ public class ProgressRecord {
     /**
      * The list of items in the progress record.
      */
-
     @Getter
     private List<ProgressRecordItem> progressRecordItems;
 
@@ -38,6 +39,22 @@ public class ProgressRecord {
      */
     public void setProgressRecordItems(List<ProgressRecordItem> progressRecordItems) {
         this.progressRecordItems = progressRecordItems == null ? new ArrayList<>() : progressRecordItems;
+    }
+
+    /**
+     * Gets the latest progress record item using SequencedCollection.
+     * @return the latest ProgressRecordItem, or null if empty
+     */
+    public ProgressRecordItem getLatestProgressRecordItem() {
+        return progressRecordItems.isEmpty() ? null : progressRecordItems.getLast();
+    }
+
+    /**
+     * Gets the initial progress record item using SequencedCollection.
+     * @return the first ProgressRecordItem, or null if empty
+     */
+    public ProgressRecordItem getInitialProgressRecordItem() {
+        return progressRecordItems.isEmpty() ? null : progressRecordItems.getFirst();
     }
 
     /**
@@ -114,8 +131,36 @@ public class ProgressRecord {
      */
     public long calculateDaysElapsedForEnrollment(Enrollment enrollment) {
         return progressRecordItems.stream()
-                .filter(progressRecordItem -> progressRecordItem.getEnrollment().equals(enrollment))
+                .filter(progressRecordItem -> Objects.equals(progressRecordItem.getEnrollment(), enrollment))
                 .mapToLong(ProgressRecordItem::calculateDaysElapsed)
                 .sum();
+    }
+
+    /**
+     * Progressive milestone record representing cumulative elapsed days at a tutorial.
+     *
+     * @param tutorialId the tutorial ID
+     * @param cumulativeDaysElapsed cumulative days up to this milestone
+     */
+    public record ProgressMilestone(TutorialId tutorialId, long cumulativeDaysElapsed) {}
+
+    /**
+     * Calculates progressive timeline milestones across all started/completed tutorials
+     * using Stream Gatherers cumulative scan.
+     *
+     * @return ordered list of progressive milestones
+     */
+    public List<ProgressMilestone> calculateProgressMilestones() {
+        return progressRecordItems.stream()
+                .filter(item -> !item.isNotStarted())
+                .gather(Gatherers.scan(
+                        () -> new ProgressMilestone(new TutorialId(0L), 0L),
+                        (acc, item) -> new ProgressMilestone(
+                                item.getTutorialId(),
+                                acc.cumulativeDaysElapsed() + item.calculateDaysElapsed()
+                        )
+                ))
+                .filter(milestone -> milestone.tutorialId().tutorialId() > 0L)
+                .toList();
     }
 }
