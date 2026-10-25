@@ -2,7 +2,7 @@ package com.acme.center.platform.learning.domain.model.commands;
 
 /**
  * Command to update a course
- * @param courseId the course id.
+ * @param courseId the course ID.
  *                 Cannot be null or less than 1
  * @param title the course title.
  *              Cannot be null or blank
@@ -12,15 +12,15 @@ package com.acme.center.platform.learning.domain.model.commands;
 public record UpdateCourseCommand(Long courseId, String title, String description) {
     /**
      * Constructor
-     * @param courseId the course id.
+     * @param courseId the course ID.
      *                 Cannot be null or less than 1
      * @param title the course title.
      *              Cannot be null or blank
      * @param description the course description.
      *                    Cannot be null or blank
      * @throws IllegalArgumentException if courseId is null or less than 1
-     * @throws IllegalArgumentException if title is null or blank
-     * @throws IllegalArgumentException if description is null or blank
+     * @throws IllegalArgumentException if the title is null or blank
+     * @throws IllegalArgumentException if the description is null or blank
      */
     public UpdateCourseCommand {
         if (courseId == null || courseId <= 0) {

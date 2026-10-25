@@ -10,7 +10,7 @@ public record CreateCourseCommand(String title, String description) {
     /**
      * Compact constructor for CreateCourseCommand.
      * Validates that title and description are not null or blank.
-     * @throws IllegalArgumentException if title or description is null or blank.
+     * @throws IllegalArgumentException if the title or description is null or blank.
      */
     public CreateCourseCommand {
         if (title == null || title.isBlank()) {

@@ -6,7 +6,7 @@ import com.acme.center.platform.learning.domain.model.valueobjects.TutorialId;
  * Command to add a tutorial to a course learning path
  * @param tutorialId the tutorial id.
  *                   Cannot be null or less than 1
- * @param courseId the course id.
+ * @param courseId the course ID.
  *                 Cannot be null or less than 1
  * @see TutorialId
  */
@@ -15,7 +15,7 @@ public record AddTutorialToCourseLearningPathCommand(TutorialId tutorialId, Long
      * Constructor
      * @param tutorialId the tutorial id.
      *                   Cannot be null or less than 1
-     * @param courseId the course id.
+     * @param courseId the course ID.
      *                 Cannot be null or less than 1
      * @throws IllegalArgumentException if tutorialId is null or less than 1
      * @throws IllegalArgumentException if courseId is null or less than 1

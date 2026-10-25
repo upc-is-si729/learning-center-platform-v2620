@@ -6,7 +6,7 @@ import com.acme.center.platform.learning.domain.model.valueobjects.AcmeStudentRe
  * Command to request enrollment
  * @param studentRecordId the student record id.
  *                        Cannot be null or blank
- * @param courseId the course id.
+ * @param courseId the course ID.
  *                 Cannot be null or less than 1
  */
 public record RequestEnrollmentCommand(AcmeStudentRecordId studentRecordId, Long courseId) {
@@ -14,9 +14,9 @@ public record RequestEnrollmentCommand(AcmeStudentRecordId studentRecordId, Long
      * Constructor
      * @param studentRecordId the student record id.
      *                        Cannot be null or blank
-     * @param courseId the course id.
+     * @param courseId the course ID.
      *                 Cannot be null or less than 1
-     * @throws IllegalArgumentException if studentRecordId is null or courseId is null or less than 1
+     * @throws IllegalArgumentException if studentRecordId is null, or courseId is null or less than 1
      */
     public RequestEnrollmentCommand {
         if (studentRecordId == null || studentRecordId.studentRecordId() == null || studentRecordId.studentRecordId().isBlank()) {
