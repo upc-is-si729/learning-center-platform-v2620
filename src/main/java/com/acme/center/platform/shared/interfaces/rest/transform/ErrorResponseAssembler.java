@@ -3,6 +3,7 @@ package com.acme.center.platform.shared.interfaces.rest.transform;
 import com.acme.center.platform.shared.application.result.ApplicationError;
 import com.acme.center.platform.shared.interfaces.rest.resources.ErrorResource;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -78,7 +79,7 @@ public final class ErrorResponseAssembler {
         return "resource";
     }
 
-    private static String toLocalizedMessageOrNull(String key, Object... args) {
+    private static @Nullable String toLocalizedMessageOrNull(String key, Object... args) {
         Locale locale = LocaleContextHolder.getLocale();
         try {
             ResourceBundle bundle = ResourceBundle.getBundle(MESSAGES_BASENAME, locale);
@@ -118,7 +119,6 @@ public final class ErrorResponseAssembler {
             case String s when s.endsWith("_NOT_FOUND") -> HttpStatus.NOT_FOUND;
             case "BUSINESS_RULE_VIOLATION" -> HttpStatusCode.valueOf(422);
             case String s when s.endsWith("_CONFLICT") -> HttpStatus.CONFLICT;
-            case "UNEXPECTED_ERROR" -> HttpStatus.INTERNAL_SERVER_ERROR;
             default -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
     }
