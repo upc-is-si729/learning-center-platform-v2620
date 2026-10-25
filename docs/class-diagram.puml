@@ -1,11 +1,22 @@
 @startuml
-' Learning Center Platform - detailed class diagram (May 2026)
+' ==============================================================================
+' ACME Learning Center Platform - Class Diagram
+' Architecture: Modular Monolith with Layered Domain-Driven Design (DDD)
+' Modern Stack: Java 27, Spring Boot 4.1.1, Project Loom, RFC 9457 Problem Details
+' ==============================================================================
 
 skinparam classAttributeIconSize 0
 skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam handwritten false
+skinparam roundcorner 5
 left to right direction
 
+' ==============================================================================
+' BOUNDED CONTEXT: IAM (Identity & Access Management)
+' ==============================================================================
 package "com.acme.center.platform.iam" {
+
   package "interfaces.rest" {
     class AuthenticationController <<controller>> {
       -userCommandService: UserCommandService
@@ -119,6 +130,9 @@ package "com.acme.center.platform.iam" {
       -username: String
       -password: String
       -roles: Set<Role>
+      +User(username: String, password: String)
+      +User(username: String, password: String, roles: List<Role>)
+      +{static} reconstitute(id: Long, username: String, password: String, roles: Set<Role>): User
       +addRole(role: Role): User
       +addRoles(roles: List<Role>): User
     }
@@ -128,14 +142,21 @@ package "com.acme.center.platform.iam" {
     class Role <<entity>> {
       -id: Long
       -name: Roles
+      +Role(name: Roles)
+      +{static} reconstitute(id: Long, name: Roles): Role
       +getStringName(): String
-      +getDefaultRole(): Role
-      +toRoleFromName(name: String): Role
+      +{static} getDefaultRole(): Role
+      +{static} toRoleFromName(name: String): Role
+      +{static} validateRoleSet(roles: List<Role>): List<Role>
     }
   }
 
   package "domain.model.valueobjects" {
-    enum Roles <<enum>>
+    enum Roles <<enum>> {
+      ROLE_USER
+      ROLE_INSTRUCTOR
+      ROLE_ADMIN
+    }
   }
 
   package "domain.repositories" {
@@ -155,22 +176,11 @@ package "com.acme.center.platform.iam" {
     }
   }
 
-  package "infrastructure.hashing.bcrypt" {
-    interface BCryptHashingService <<adapter>>
-  }
-
   package "infrastructure.hashing.bcrypt.services" {
     class HashingServiceImpl <<adapter>> {
       -passwordEncoder: BCryptPasswordEncoder
       +encode(rawPassword: CharSequence): String
       +matches(rawPassword: CharSequence, encodedPassword: String): boolean
-    }
-  }
-
-  package "infrastructure.tokens.jwt" {
-    interface BearerTokenService <<adapter>> {
-      +getBearerTokenFrom(request: HttpServletRequest): String
-      +generateToken(authentication: Authentication): String
     }
   }
 
@@ -187,12 +197,24 @@ package "com.acme.center.platform.iam" {
   }
 
   package "infrastructure.persistence.jpa.adapters" {
-    class UserRepositoryImpl <<adapter>>
-    class RoleRepositoryImpl <<adapter>>
+    class UserRepositoryImpl <<adapter>> {
+      -userPersistenceRepository: UserPersistenceRepository
+      -domainEventPublisher: DomainEventPublisher
+      +save(user: User): User
+    }
+
+    class RoleRepositoryImpl <<adapter>> {
+      -rolePersistenceRepository: RolePersistenceRepository
+      +save(role: Role): Role
+    }
   }
 }
 
+' ==============================================================================
+' BOUNDED CONTEXT: LEARNING
+' ==============================================================================
 package "com.acme.center.platform.learning" {
+
   package "interfaces.rest" {
     class CoursesController <<controller>> {
       -courseCommandService: CourseCommandService
@@ -362,7 +384,7 @@ package "com.acme.center.platform.learning" {
       -learningPath: LearningPath
       +Course(title: String, description: String)
       +Course(command: CreateCourseCommand)
-      +reconstitute(id: Long, title: String, description: String, learningPath: LearningPath): Course
+      +{static} reconstitute(id: Long, title: String, description: String, learningPath: LearningPath): Course
       +updateInformation(title: String, description: String): Course
       +addTutorialToLearningPath(tutorialId: TutorialId): void
       +addTutorialToLearningPath(tutorialId: TutorialId, nextTutorialId: TutorialId): void
@@ -374,7 +396,7 @@ package "com.acme.center.platform.learning" {
       -profileId: ProfileId
       -performanceMetricSet: StudentPerformanceMetricSet
       +Student(profileId: ProfileId)
-      +reconstitute(id: Long, studentRecordId: AcmeStudentRecordId, profileId: ProfileId, metricSet: StudentPerformanceMetricSet): Student
+      +{static} reconstitute(id: Long, studentRecordId: AcmeStudentRecordId, profileId: ProfileId, metricSet: StudentPerformanceMetricSet): Student
       +updateMetricsOnCourseCompleted(): void
       +updateMetricsOnTutorialCompleted(): void
       +getStudentRecordId(): String
@@ -388,7 +410,7 @@ package "com.acme.center.platform.learning" {
       -progressRecord: ProgressRecord
       -status: EnrollmentStatus
       +Enrollment(studentRecordId: AcmeStudentRecordId, courseId: CourseId)
-      +reconstitute(id: Long, studentRecordId: AcmeStudentRecordId, courseId: CourseId, status: EnrollmentStatus, progressRecord: ProgressRecord): Enrollment
+      +{static} reconstitute(id: Long, studentRecordId: AcmeStudentRecordId, courseId: CourseId, status: EnrollmentStatus, progressRecord: ProgressRecord): Enrollment
       +confirm(learningPath: LearningPath): void
       +reject(): void
       +cancel(): void
@@ -402,8 +424,32 @@ package "com.acme.center.platform.learning" {
   }
 
   package "domain.model.entities" {
-    class LearningPathItem <<entity>>
-    class ProgressRecordItem <<entity>>
+    class LearningPathItem <<entity>> {
+      -id: Long
+      -course: Course
+      -tutorialId: TutorialId
+      -nextItem: LearningPathItem
+      +LearningPathItem(course: Course, tutorialId: TutorialId, nextItem: LearningPathItem)
+      +{static} reconstitute(id: Long, course: Course, tutorialId: TutorialId, nextItem: LearningPathItem): LearningPathItem
+      +updateNextItem(nextItem: LearningPathItem): void
+    }
+
+    class ProgressRecordItem <<entity>> {
+      -id: Long
+      -enrollment: Enrollment
+      -tutorialId: TutorialId
+      -status: ProgressStatus
+      -startedAt: Date
+      -completedAt: Date
+      +ProgressRecordItem(enrollment: Enrollment, tutorialId: TutorialId)
+      +{static} reconstitute(id: Long, enrollment: Enrollment, tutorialId: TutorialId, status: ProgressStatus, startedAt: Date, completedAt: Date): ProgressRecordItem
+      +start(): void
+      +complete(): void
+      +isCompleted(): boolean
+      +isInProgress(): boolean
+      +isNotStarted(): boolean
+      +calculateDaysElapsed(): long
+    }
   }
 
   package "domain.model.valueobjects" {
@@ -415,8 +461,6 @@ package "com.acme.center.platform.learning" {
       +studentRecordId: String
       +AcmeStudentRecordId()
       +AcmeStudentRecordId(studentRecordId: String)
-      --
-      ' semantic: studentRecordId must be a valid UUID string
     }
 
     class ProfileId <<value object>> {
@@ -427,10 +471,42 @@ package "com.acme.center.platform.learning" {
       +tutorialId: Long
     }
 
-    class LearningPath <<value object>>
-    class ProgressRecord <<value object>>
-    enum EnrollmentStatus <<enum>>
-    class StudentPerformanceMetricSet <<value object>>
+    class LearningPath <<value object>> {
+      -learningPathItems: List<LearningPathItem>
+      +addItem(course: Course, tutorialId: TutorialId): void
+      +addItem(course: Course, tutorialId: TutorialId, nextTutorialId: TutorialId): void
+      +getLastItemInLearningPath(): LearningPathItem
+      +getFirstTutorialInLearningPath(): TutorialId
+      +getNextTutorialInLearningPath(currentTutorialId: TutorialId): TutorialId
+      +isSequenceConsistent(): boolean
+    }
+
+    class ProgressRecord <<value object>> {
+      -progressRecordItems: List<ProgressRecordItem>
+      +initializeProgressRecord(enrollment: Enrollment, learningPath: LearningPath): void
+      +completeTutorial(tutorialId: TutorialId, learningPath: LearningPath): void
+      +calculateProgressMilestones(): List<ProgressMilestone>
+    }
+
+    enum EnrollmentStatus <<enum>> {
+      REQUESTED
+      CONFIRMED
+      REJECTED
+      CANCELLED
+    }
+
+    enum ProgressStatus <<enum>> {
+      NOT_STARTED
+      STARTED
+      COMPLETED
+    }
+
+    class StudentPerformanceMetricSet <<value object>> {
+      -totalCompletedCourses: Integer
+      -totalTutorials: Integer
+      +incrementTotalCompletedCourses(): StudentPerformanceMetricSet
+      +incrementTotalTutorials(): StudentPerformanceMetricSet
+    }
   }
 
   package "domain.model.events" {
@@ -463,19 +539,37 @@ package "com.acme.center.platform.learning" {
       +findAll(): List<Enrollment>
       +findAllByAcmeStudentRecordId(id: AcmeStudentRecordId): List<Enrollment>
       +findAllByCourseId(courseId: Long): List<Enrollment>
-      +findByAcmeStudentRecordIdAndCourseId(id: AcmeStudentRecordId, courseId: Long): Optional<Enrollment>
+      +findByAcmeStudentRecordIdAndCourseId(id: AcmeStudentRecordId, courseId: CourseId): Optional<Enrollment>
       +save(enrollment: Enrollment): Enrollment
     }
   }
 
   package "infrastructure.persistence.jpa.adapters" {
-    class CourseRepositoryImpl <<adapter>>
-    class StudentRepositoryImpl <<adapter>>
-    class EnrollmentRepositoryImpl <<adapter>>
+    class CourseRepositoryImpl <<adapter>> {
+      -coursePersistenceRepository: CoursePersistenceRepository
+      -domainEventPublisher: DomainEventPublisher
+      +save(course: Course): Course
+    }
+
+    class StudentRepositoryImpl <<adapter>> {
+      -studentPersistenceRepository: StudentRepository
+      -domainEventPublisher: DomainEventPublisher
+      +save(student: Student): Student
+    }
+
+    class EnrollmentRepositoryImpl <<adapter>> {
+      -enrollmentPersistenceRepository: EnrollmentPersistenceRepository
+      -domainEventPublisher: DomainEventPublisher
+      +save(enrollment: Enrollment): Enrollment
+    }
   }
 }
 
+' ==============================================================================
+' BOUNDED CONTEXT: PROFILES
+' ==============================================================================
 package "com.acme.center.platform.profiles" {
+
   package "interfaces.rest" {
     class ProfilesController <<controller>> {
       -profileCommandService: ProfileCommandService
@@ -501,7 +595,7 @@ package "com.acme.center.platform.profiles" {
       +email: String
       +city: String
       +country: String
-      +from(profile: Profile): ProfileCreatedIntegrationEvent
+      +{static} from(profile: Profile): ProfileCreatedIntegrationEvent
     }
   }
 
@@ -557,18 +651,38 @@ package "com.acme.center.platform.profiles" {
       -name: PersonName
       -emailAddress: EmailAddress
       -streetAddress: StreetAddress
+      +Profile(firstName: String, lastName: String, email: String, street: String, number: String, city: String, postalCode: String, country: String)
+      +Profile(command: CreateProfileCommand)
+      +{static} reconstitute(id: Long, name: PersonName, emailAddress: EmailAddress, streetAddress: StreetAddress): Profile
       +getFullName(): String
       +getEmailAddress(): String
       +getStreetAddress(): String
       +updateName(firstName: String, lastName: String): void
       +updateEmailAddress(email: String): void
+      +updateStreetAddress(street: String, number: String, city: String, postalCode: String, country: String): void
+      +onCreated(): void
     }
   }
 
   package "domain.model.valueobjects" {
-    class PersonName <<value object>>
-    class EmailAddress <<value object>>
-    class StreetAddress <<value object>>
+    class PersonName <<value object>> {
+      +firstName: String
+      +lastName: String
+      +fullName(): String
+    }
+
+    class EmailAddress <<value object>> {
+      +address: String
+    }
+
+    class StreetAddress <<value object>> {
+      +street: String
+      +number: String
+      +city: String
+      +postalCode: String
+      +country: String
+      +getStreetAddress(): String
+    }
   }
 
   package "domain.model.events" {
@@ -589,45 +703,89 @@ package "com.acme.center.platform.profiles" {
   }
 
   package "infrastructure.persistence.jpa.adapters" {
-    class ProfileRepositoryImpl <<adapter>>
+    class ProfileRepositoryImpl <<adapter>> {
+      -profilePersistenceRepository: ProfilePersistenceRepository
+      -domainEventPublisher: DomainEventPublisher
+      +save(profile: Profile): Profile
+    }
   }
 }
 
+' ==============================================================================
+' BOUNDED CONTEXT: SHARED (Shared Kernel)
+' ==============================================================================
 package "com.acme.center.platform.shared" {
+
   package "domain.model.aggregates" {
-    abstract class AbstractDomainAggregateRoot <<base aggregate>>
+    abstract class AbstractDomainAggregateRoot<T> <<base aggregate>> {
+      -domainEvents: List<Object>
+      +registerDomainEvent(event: Object): void
+      +domainEvents(): List<Object>
+      +clearDomainEvents(): void
+    }
   }
 
   package "application.result" {
-    class Result <<utility>>
+    interface Result<T, E> <<sealed utility>> {
+      +isSuccess(): boolean
+      +isFailure(): boolean
+      +fold(successFn: Function, failureFn: Function): R
+    }
+
+    class Success<T, E> <<record>>
+    class Failure<T, E> <<record>>
 
     class ApplicationError <<value object>> {
       +code: String
       +message: String
-      +notFound(entity: String, key: String): ApplicationError
-      +conflict(entity: String, message: String): ApplicationError
-      +validationError(field: String, message: String): ApplicationError
-      +unexpected(context: String, message: String): ApplicationError
+      +details: String
+      +{static} notFound(entity: String, key: String): ApplicationError
+      +{static} conflict(entity: String, message: String): ApplicationError
+      +{static} validationError(field: String, message: String): ApplicationError
+      +{static} unexpected(context: String, message: String): ApplicationError
+    }
+  }
+
+  package "infrastructure.events" {
+    class DomainEventPublisher <<component>> {
+      -applicationEventPublisher: ApplicationEventPublisher
+      +publishAndClearEvents(aggregate: AbstractDomainAggregateRoot<?>): void
+    }
+  }
+
+  package "infrastructure.concurrency.loom.configuration" {
+    class VirtualThreadsConfiguration <<configuration>> {
+      +applicationTaskExecutor(): TaskExecutor
     }
   }
 
   package "interfaces.rest" {
-    class GlobalExceptionHandler <<exception handler>>
+    class GlobalExceptionHandler <<exception handler>> {
+      +handleMethodArgumentNotValid(ex: MethodArgumentNotValidException): ResponseEntity<ProblemDetail>
+      +handleIllegalArgumentException(ex: IllegalArgumentException): ResponseEntity<ProblemDetail>
+      +handleRuntimeException(ex: RuntimeException): ResponseEntity<ProblemDetail>
+      +handleException(ex: Exception): ResponseEntity<ProblemDetail>
+    }
+  }
 
-    class MessageResource <<resource>> {
-      +message: String
+  package "interfaces.rest.transform" {
+    class ProblemDetailFromApplicationErrorAssembler <<assembler>> {
+      +{static} toProblemDetailFromApplicationError(error: ApplicationError): ProblemDetail
+      +{static} toResponseFromApplicationError(error: ApplicationError): ResponseEntity<ProblemDetail>
+      +{static} toStatusFromErrorCode(errorCode: String): HttpStatusCode
     }
 
-    class ErrorResource <<resource>> {
-      +error: String
-      +details: String
-      +status: int
-      +timestamp: String
+    class ResponseEntityAssembler <<assembler>> {
+      +{static} toResponseEntityFromResult(result: Result, successAssembler: Function, successStatus: HttpStatusCode): ResponseEntity<?>
     }
   }
 }
 
-' IAM relationships
+' ==============================================================================
+' RELATIONSHIPS & DEPENDENCY INVERSION MAPPINGS
+' ==============================================================================
+
+' --- IAM Relationships ---
 AuthenticationController --> UserCommandService
 UsersController --> UserQueryService
 RolesController --> RoleQueryService
@@ -644,19 +802,25 @@ UserCommandServiceImpl --> UserRepository
 UserCommandServiceImpl --> RoleRepository
 UserCommandServiceImpl --> HashingService
 UserCommandServiceImpl --> TokenService
+
 UserQueryServiceImpl --> UserRepository
-RoleCommandServiceImpl --> RoleRepository
 RoleQueryServiceImpl --> RoleRepository
+RoleCommandServiceImpl --> RoleRepository
+
 ApplicationReadyEventHandler --> RoleCommandService
 
-BCryptHashingService ..|> HashingService
-HashingServiceImpl ..|> BCryptHashingService
-BearerTokenService ..|> TokenService
-TokenServiceImpl ..|> BearerTokenService
 UserRepositoryImpl ..|> UserRepository
 RoleRepositoryImpl ..|> RoleRepository
+UserRepositoryImpl --> DomainEventPublisher
 
-' Learning relationships
+HashingServiceImpl ..|> HashingService
+TokenServiceImpl ..|> TokenService
+
+User --|> AbstractDomainAggregateRoot
+User "1" o-- "*" Role
+Role --> Roles
+
+' --- Learning Relationships ---
 CoursesController --> CourseCommandService
 CoursesController --> CourseQueryService
 CourseLearningPathController --> CourseCommandService
@@ -671,40 +835,55 @@ StudentEnrollmentsController --> StudentQueryService
 CourseCommandServiceImpl ..|> CourseCommandService
 StudentCommandServiceImpl ..|> StudentCommandService
 EnrollmentCommandServiceImpl ..|> EnrollmentCommandService
+
 CourseQueryServiceImpl ..|> CourseQueryService
 StudentQueryServiceImpl ..|> StudentQueryService
 EnrollmentQueryServiceImpl ..|> EnrollmentQueryService
 
 CourseCommandServiceImpl --> CourseRepository
-CourseQueryServiceImpl --> CourseRepository
 StudentCommandServiceImpl --> StudentRepository
 StudentCommandServiceImpl --> ExternalProfileService
-StudentQueryServiceImpl --> StudentRepository
 EnrollmentCommandServiceImpl --> CourseRepository
 EnrollmentCommandServiceImpl --> StudentRepository
 EnrollmentCommandServiceImpl --> EnrollmentRepository
+
+CourseQueryServiceImpl --> CourseRepository
+StudentQueryServiceImpl --> StudentRepository
 EnrollmentQueryServiceImpl --> EnrollmentRepository
+
+LearningProfileCreatedEventHandler --> StudentCommandService
+TutorialCompletedEventHandler --> StudentCommandService
+TutorialCompletedEventHandler --> EnrollmentQueryService
+
+ExternalProfileService --> ProfilesContextFacade
 
 CourseRepositoryImpl ..|> CourseRepository
 StudentRepositoryImpl ..|> StudentRepository
 EnrollmentRepositoryImpl ..|> EnrollmentRepository
 
+CourseRepositoryImpl --> DomainEventPublisher
+StudentRepositoryImpl --> DomainEventPublisher
+EnrollmentRepositoryImpl --> DomainEventPublisher
+
+Course --|> AbstractDomainAggregateRoot
+Student --|> AbstractDomainAggregateRoot
+Enrollment --|> AbstractDomainAggregateRoot
+
+Course *-- LearningPath
+LearningPath o-- "*" LearningPathItem
+Enrollment *-- ProgressRecord
+ProgressRecord o-- "*" ProgressRecordItem
+
+Enrollment --> CourseId
+Enrollment --> AcmeStudentRecordId
+Enrollment --> EnrollmentStatus
 Student --> AcmeStudentRecordId
 Student --> ProfileId
 Student --> StudentPerformanceMetricSet
-Enrollment --> AcmeStudentRecordId
-Enrollment --> Course
-Enrollment --> ProgressRecord
-Enrollment --> EnrollmentStatus
-Course --> LearningPath
-LearningPath --> LearningPathItem
-ProgressRecord --> ProgressRecordItem
 
-Enrollment ..> TutorialCompletedEvent : publishes
-TutorialCompletedEventHandler --> EnrollmentQueryService
-TutorialCompletedEventHandler --> StudentCommandService
+TutorialCompletedEvent --> TutorialId
 
-' Profiles relationships
+' --- Profiles Relationships ---
 ProfilesController --> ProfileCommandService
 ProfilesController --> ProfileQueryService
 
@@ -714,27 +893,30 @@ ProfilesContextFacadeImpl --> ProfileQueryService
 
 ProfileCommandServiceImpl ..|> ProfileCommandService
 ProfileQueryServiceImpl ..|> ProfileQueryService
+
 ProfileCommandServiceImpl --> ProfileRepository
 ProfileQueryServiceImpl --> ProfileRepository
+
+ProfilesProfileCreatedEventHandler --> ProfileCreatedIntegrationEvent
+
 ProfileRepositoryImpl ..|> ProfileRepository
+ProfileRepositoryImpl --> DomainEventPublisher
 
-Profile --> PersonName
-Profile --> EmailAddress
-Profile --> StreetAddress
-Profile ..> ProfileCreatedEvent : publishes
-ProfilesProfileCreatedEventHandler --> ProfileCreatedEvent
-ProfilesProfileCreatedEventHandler --> ProfileCreatedIntegrationEvent : republishes
-
-' Cross-context relationships
-ExternalProfileService --> ProfilesContextFacade
-LearningProfileCreatedEventHandler --> ProfileCreatedIntegrationEvent : subscribes
-LearningProfileCreatedEventHandler --> StudentCommandService
-
-' Shared base class usage
-User --|> AbstractDomainAggregateRoot
-Course --|> AbstractDomainAggregateRoot
-Student --|> AbstractDomainAggregateRoot
-Enrollment --|> AbstractDomainAggregateRoot
 Profile --|> AbstractDomainAggregateRoot
+Profile *-- PersonName
+Profile *-- EmailAddress
+Profile *-- StreetAddress
+
+' --- Cross-Context Invocations & Event Flow ---
+ExternalProfileService ..> ProfilesContextFacade : cross-context sync (ACL)
+ProfilesProfileCreatedEventHandler ..> LearningProfileCreatedEventHandler : asynchronous event (ProfileCreatedIntegrationEvent)
+Enrollment ..> TutorialCompletedEvent : registers
+TutorialCompletedEventHandler ..> StudentCommandService : updates student metrics
+
+' --- Shared Kernel Usage ---
+Result <|.. Success
+Result <|.. Failure
+ProblemDetailFromApplicationErrorAssembler --> ApplicationError
+GlobalExceptionHandler ..> ProblemDetailFromApplicationErrorAssembler
 
 @enduml

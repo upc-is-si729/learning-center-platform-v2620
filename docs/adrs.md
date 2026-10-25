@@ -7,12 +7,18 @@ This document maintains Architecture Decision Records (ADRs) for the **ACME Lear
 ## Index
 
 - [ADR-001: Modular Monolith with Layered Architecture and Domain-Driven Design](#adr-001-modular-monolith-with-layered-architecture-and-domain-driven-design)
-- [ADR-002: Aggregate Invariant Encapsulation and Reconstitution Factory Pattern](#adr-002-aggregate-invariant-encapsulation-and-reconstitution-factory-pattern)
-- [ADR-003: Standardized Domain Event Dispatching via DomainEventPublisher](#adr-003-standardized-domain-event-dispatching-via-domaineventpublisher)
-- [ADR-004: Aggregate References by Identity (CourseId)](#adr-004-aggregate-references-by-identity-courseid)
-- [ADR-005: Adoption of RFC 9457 Problem Details for REST Error Responses](#adr-005-adoption-of-rfc-9457-problem-details-for-rest-error-responses)
-- [ADR-006: Virtual Threads and Concurrency Optimization via Project Loom](#adr-006-virtual-threads-and-concurrency-optimization-via-project-loom)
-- [ADR-007: Modern Sequenced Collections and Stream Gatherers in Domain Model](#adr-007-modern-sequenced-collections-and-stream-gatherers-in-domain-model)
+- [ADR-002: Command Query Responsibility Segregation (CQRS) Pattern](#adr-002-command-query-responsibility-segregation-cqrs-pattern)
+- [ADR-003: Anti-Corruption Layer (ACL) and Context Facades for Cross-Context Integration](#adr-003-anti-corruption-layer-acl-and-context-facades-for-cross-context-integration)
+- [ADR-004: Decoupling Domain Aggregates from JPA Persistence Entities](#adr-004-decoupling-domain-aggregates-from-jpa-persistence-entities)
+- [ADR-005: Functional Error Handling with Sealed Result Type](#adr-005-functional-error-handling-with-sealed-result-type)
+- [ADR-006: Stateless JWT Authentication and Spring Security Integration](#adr-006-stateless-jwt-authentication-and-spring-security-integration)
+- [ADR-007: Standardized Technology Packaging Taxonomy for Infrastructure](#adr-007-standardized-technology-packaging-taxonomy-for-infrastructure)
+- [ADR-008: Aggregate Invariant Encapsulation and Reconstitution Factory Pattern](#adr-008-aggregate-invariant-encapsulation-and-reconstitution-factory-pattern)
+- [ADR-009: Standardized Domain Event Dispatching via DomainEventPublisher](#adr-009-standardized-domain-event-dispatching-via-domaineventpublisher)
+- [ADR-010: Aggregate References by Identity (CourseId)](#adr-010-aggregate-references-by-identity-courseid)
+- [ADR-011: Adoption of RFC 9457 Problem Details for REST Error Responses](#adr-011-adoption-of-rfc-9457-problem-details-for-rest-error-responses)
+- [ADR-012: Virtual Threads and Concurrency Optimization via Project Loom](#adr-012-virtual-threads-and-concurrency-optimization-via-project-loom)
+- [ADR-013: Modern Sequenced Collections and Stream Gatherers in Domain Model](#adr-013-modern-sequenced-collections-and-stream-gatherers-in-domain-model)
 
 ---
 
@@ -28,7 +34,7 @@ The platform requires clear boundaries between distinct business domains (IAM, S
 We structure the system as a **Modular Monolith** applying **Domain-Driven Design (DDD)** and **Classic 4-Layer Architecture**:
 1. **Bounded Contexts**: `iam`, `profiles`, `learning`, and `shared`.
 2. **Layer Separation**: Each context defines `domain`, `application`, `infrastructure`, and `interfaces`.
-3. **Decoupled Persistence**: Domain aggregates are pure Java classes decoupled from JPA `@Entity` annotations. Persistence entities (`*PersistenceEntity`) reside solely in `infrastructure`.
+3. **Dependency Rule**: Dependencies point inward toward the `domain` layer. Domain classes must never depend on application, infrastructure, or interface layers.
 4. **Anti-Corruption Layer (ACL)**: Cross-context communication is governed through explicit facades (`IamContextFacade`, `ProfilesContextFacade`) and domain integration events.
 
 ### Consequences
@@ -37,7 +43,133 @@ We structure the system as a **Modular Monolith** applying **Domain-Driven Desig
 
 ---
 
-## ADR-002: Aggregate Invariant Encapsulation and Reconstitution Factory Pattern
+## ADR-002: Command Query Responsibility Segregation (CQRS) Pattern
+
+### Status
+Accepted
+
+### Context
+In complex domains, models optimized for state mutation (invariants, validations, transactional consistency) often diverge from models required for presentation and query retrieval. Mixing read and write logic into monolithic service classes leads to bloated controllers and leaked business logic.
+
+### Decision
+We implement a lightweight **Command Query Responsibility Segregation (CQRS)** pattern across all bounded contexts:
+1. **Command Services**: Dedicated interfaces (`*CommandService`) accepting immutable Java `record` commands (e.g., `CreateCourseCommand`, `SignInCommand`) for state-changing operations and returning `Result<T, ApplicationError>`.
+2. **Query Services**: Dedicated interfaces (`*QueryService`) accepting immutable Java `record` queries (e.g., `GetCourseByIdQuery`, `GetAllEnrollmentsQuery`) for read-only operations and returning domain aggregates or collections.
+3. **Immutability**: All commands and queries are immutable Java `record`s.
+
+### Consequences
+- **Positive**: Clear separation of side-effecting operations and read operations, easier optimization of query paths, highly testable service contracts.
+- **Negative**: Increases the number of interfaces and record types per aggregate root.
+
+---
+
+## ADR-003: Anti-Corruption Layer (ACL) and Context Facades for Cross-Context Integration
+
+### Status
+Accepted
+
+### Context
+Bounded contexts need to interact (e.g., the `learning` context needs to verify or create profiles managed by the `profiles` context). Allowing direct dependencies between internal aggregate repositories across contexts creates tight coupling and violates bounded context autonomy.
+
+### Decision
+We implement **Anti-Corruption Layers (ACL)** and **Context Facades** for cross-context collaboration:
+1. **Exposed Facades**: Contexts expose an interface in `interfaces.acl` (e.g., `ProfilesContextFacade`, `IamContextFacade`) backed by an internal implementation in `application.acl` that delegates strictly to local command/query services.
+2. **Outbound Adapters**: Consuming contexts interact with external facades through outbound adapter services in `application.internal.outboundservices.acl` (e.g., `ExternalProfileService`).
+3. **Integration Events**: Asynchronous cross-context notifications are published as integration events (e.g., `ProfileCreatedIntegrationEvent` triggering `LearningProfileCreatedEventHandler`).
+
+### Consequences
+- **Positive**: Bounded contexts remain autonomous; changes to internal context structures do not break external consumers.
+- **Negative**: Requires intermediary facade methods and event translation boilerplate.
+
+---
+
+## ADR-004: Decoupling Domain Aggregates from JPA Persistence Entities
+
+### Status
+Accepted
+
+### Context
+Using JPA annotations directly on Domain Aggregate Roots couples core business logic and invariants to ORM frameworks, database schema constraints, and no-arg constructor requirements.
+
+### Decision
+We strictly separate the **Domain Model** from the **Persistence Model**:
+1. **Domain Aggregates**: Pure Java classes extending `AbstractDomainAggregateRoot<T>`, residing in `domain.model.aggregates` with zero JPA annotations.
+2. **Persistence Entities**: Reside in `infrastructure.persistence.jpa.entities`, extending `AuditableAbstractPersistenceEntity` and decorated with JPA annotations (`@Entity`, `@Table`, `@Column`).
+3. **Persistence Assemblers**: Static assemblers (`*PersistenceAssembler`) in `infrastructure.persistence.jpa.assemblers` translate bi-directionally between domain aggregates and persistence entities.
+
+### Consequences
+- **Positive**: Domain models remain pure, expressive, and testable with pure unit tests without Spring or database contexts.
+- **Negative**: Requires bidirectional mapping logic and manual sync between persistence entities and domain aggregates.
+
+---
+
+## ADR-005: Functional Error Handling with Sealed Result Type
+
+### Status
+Accepted
+
+### Context
+Using runtime exceptions for business rule violations and expected domain flow control creates hidden control flow, performance overhead from stack traces, and uncommunicative method signatures.
+
+### Decision
+We introduce a functional, sealed `Result<T, E>` algebraic data type in `com.acme.center.platform.shared.application.result`:
+1. **Sealed Interface**: `Result<T, E> permits Success, Failure`, supporting exhaustive Java `switch` pattern matching and record deconstruction.
+2. **Standardized ApplicationError**: `ApplicationError(code, message, details)` record captures business failure reasons without throwing exceptions.
+3. **Assembly to HTTP**: `ResponseEntityAssembler` and `ProblemDetailFromApplicationErrorAssembler` transform `Result.Failure` into appropriate HTTP responses.
+
+### Consequences
+- **Positive**: Explicit error handling in method signatures, exhaustive pattern matching, high performance without unnecessary stack trace generation.
+- **Negative**: Service callers must unpack `Result` instances via `fold` or pattern matching rather than relying on global catch blocks.
+
+---
+
+## ADR-006: Stateless JWT Authentication and Spring Security Integration
+
+### Status
+Accepted
+
+### Context
+The platform requires secure authentication and role-based authorization for REST endpoints while maintaining statelessness suitable for cloud horizontal scaling.
+
+### Decision
+We implement stateless JWT (JSON Web Token) authentication integrated with Spring Security:
+1. **JWT Generation & Validation**: `TokenService` / `TokenServiceImpl` issues and validates signed HMAC-SHA256 JWT tokens.
+2. **Password Hashing**: `HashingService` / `HashingServiceImpl` uses BCrypt password hashing.
+3. **Security DSL**: `WebSecurityConfiguration` configures stateless session management (`SessionCreationPolicy.STATELESS`), method security (`@EnableMethodSecurity`), and JWT bearer token extraction filters.
+4. **Roles**: Standardized roles `ROLE_USER`, `ROLE_INSTRUCTOR`, `ROLE_ADMIN` seeded automatically on startup via `ApplicationReadyEventHandler`.
+
+### Consequences
+- **Positive**: Stateless, scalable authentication; standards-compliant Bearer token authorization; declarative endpoint protection with `@PreAuthorize`.
+- **Negative**: Tokens cannot be revoked before expiration without maintaining a distributed token blacklist.
+
+---
+
+## ADR-007: Standardized Technology Packaging Taxonomy for Infrastructure
+
+### Status
+Accepted
+
+### Context
+Infrastructure components (persistence, security, concurrency, documentation, internationalization) were previously placed inconsistently across packages, making technology-specific configurations difficult to locate.
+
+### Decision
+We standardize infrastructure layer packaging following the explicit taxonomy:
+`infrastructure.<technology-type>.<manufacturer-technology-name>.configuration`
+
+Examples across contexts:
+- `shared.infrastructure.persistence.jpa.configuration` (Jakarta Persistence / Hibernate)
+- `shared.infrastructure.documentation.openapi.configuration` (SpringDoc OpenAPI)
+- `shared.infrastructure.concurrency.loom.configuration` (Project Loom Virtual Threads)
+- `shared.infrastructure.i18n.configuration` (Spring Localization)
+- `iam.infrastructure.authorization.sfs.configuration` (Spring Framework Security)
+
+### Consequences
+- **Positive**: Predictable, consistent architecture navigation across all bounded contexts and shared modules.
+- **Negative**: Deeper package hierarchies.
+
+---
+
+## ADR-008: Aggregate Invariant Encapsulation and Reconstitution Factory Pattern
 
 ### Status
 Accepted
@@ -56,7 +188,7 @@ Aggregate roots (`Enrollment`, `Student`, `Course`, `User`, `Profile`) originall
 
 ---
 
-## ADR-003: Standardized Domain Event Dispatching via DomainEventPublisher
+## ADR-009: Standardized Domain Event Dispatching via DomainEventPublisher
 
 ### Status
 Accepted
@@ -75,7 +207,7 @@ Domain Aggregate Roots accumulate domain events via `registerDomainEvent(...)` f
 
 ---
 
-## ADR-004: Aggregate References by Identity (CourseId)
+## ADR-010: Aggregate References by Identity (CourseId)
 
 ### Status
 Accepted
@@ -95,7 +227,7 @@ Accepted
 
 ---
 
-## ADR-005: Adoption of RFC 9457 Problem Details for REST Error Responses
+## ADR-011: Adoption of RFC 9457 Problem Details for REST Error Responses
 
 ### Status
 Accepted
@@ -115,7 +247,7 @@ REST API error responses used custom `ErrorResource` JSON schemas. Modern cloud-
 
 ---
 
-## ADR-006: Virtual Threads and Concurrency Optimization via Project Loom
+## ADR-012: Virtual Threads and Concurrency Optimization via Project Loom
 
 ### Status
 Accepted
@@ -134,7 +266,7 @@ Synchronous I/O operations (blocking database queries and REST processing) on st
 
 ---
 
-## ADR-007: Modern Sequenced Collections and Stream Gatherers in Domain Model
+## ADR-013: Modern Sequenced Collections and Stream Gatherers in Domain Model
 
 ### Status
 Accepted

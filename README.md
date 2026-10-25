@@ -165,8 +165,7 @@ Note: `.mvn/jvm.config` includes `--sun-misc-unsafe-memory-access=allow` to supp
 Refer to the `docs/` folder and project root for detailed specifications:
 - [Architecture Decision Records (ADRs)](docs/adrs.md)
 - [User Stories & API Technical Stories](docs/user-stories.md)
-- [Class Diagrams](docs/class-diagram.md)
-- [Class Diagrams (PlantUML)](docs/class-diagram.puml)
+- [Class Diagram (PlantUML)](docs/class-diagram.puml)
 - [Software Architecture (Structurizr DSL)](docs/software-architecture.dsl)
 - [Contributing Guide](CONTRIBUTING.md)
 - [Changelog](CHANGELOG.md)
