@@ -7,7 +7,6 @@ import com.acme.center.platform.profiles.domain.model.valueobjects.PersonName;
 import com.acme.center.platform.profiles.domain.model.valueobjects.StreetAddress;
 import com.acme.center.platform.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.Objects;
 

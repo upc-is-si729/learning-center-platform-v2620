@@ -3,7 +3,6 @@ package com.acme.center.platform.learning.domain.model.entities;
 import com.acme.center.platform.learning.domain.model.aggregates.Course;
 import com.acme.center.platform.learning.domain.model.valueobjects.TutorialId;
 import lombok.Getter;
-import lombok.Setter;
 
 /**
  * LearningPathItem domain entity.

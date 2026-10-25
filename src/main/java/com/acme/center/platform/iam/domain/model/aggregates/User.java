@@ -3,7 +3,6 @@ package com.acme.center.platform.iam.domain.model.aggregates;
 import com.acme.center.platform.iam.domain.model.entities.Role;
 import com.acme.center.platform.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.HashSet;
 import java.util.List;

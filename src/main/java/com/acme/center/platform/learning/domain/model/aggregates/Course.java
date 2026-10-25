@@ -5,7 +5,6 @@ import com.acme.center.platform.learning.domain.model.valueobjects.LearningPath;
 import com.acme.center.platform.learning.domain.model.valueobjects.TutorialId;
 import com.acme.center.platform.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
 import lombok.Getter;
-import lombok.Setter;
 import org.apache.logging.log4j.util.Strings;
 
 /**

@@ -5,7 +5,6 @@ import com.acme.center.platform.learning.domain.model.valueobjects.ProfileId;
 import com.acme.center.platform.learning.domain.model.valueobjects.StudentPerformanceMetricSet;
 import com.acme.center.platform.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
 import lombok.Getter;
-import lombok.Setter;
 
 /**
  * Student aggregate root.
