@@ -4,8 +4,9 @@ import com.acme.center.platform.learning.domain.model.aggregates.Course;
 import com.acme.center.platform.learning.domain.model.aggregates.Enrollment;
 import com.acme.center.platform.learning.domain.model.events.TutorialCompletedEvent;
 import com.acme.center.platform.learning.domain.model.valueobjects.AcmeStudentRecordId;
+import com.acme.center.platform.learning.domain.model.valueobjects.CourseId;
+import com.acme.center.platform.learning.domain.model.valueobjects.LearningPath;
 import com.acme.center.platform.learning.domain.model.valueobjects.TutorialId;
-import com.acme.center.platform.learning.infrastructure.persistence.jpa.entities.CoursePersistenceEntity;
 import com.acme.center.platform.learning.infrastructure.persistence.jpa.entities.EnrollmentPersistenceEntity;
 import com.acme.center.platform.learning.infrastructure.persistence.jpa.repositories.EnrollmentPersistenceRepository;
 import com.acme.center.platform.shared.infrastructure.events.DomainEventPublisher;
@@ -44,27 +45,24 @@ class EnrollmentRepositoryImplTest {
     @Test
     void saveShouldPublishDomainEventsAndClearThem() {
         // Arrange
-        var course = Course.reconstitute(100L, "Spring Boot DDD", "DDD Course", new com.acme.center.platform.learning.domain.model.valueobjects.LearningPath());
+        var course = Course.reconstitute(100L, "Spring Boot DDD", "DDD Course", new LearningPath());
         var tutorialId = new TutorialId(200L);
         course.addTutorialToLearningPath(tutorialId);
+        var learningPath = course.getLearningPath();
 
+        var courseId = new CourseId(100L);
         var studentRecordId = new AcmeStudentRecordId("123e4567-e89b-12d3-a456-426614174000");
-        var enrollment = Enrollment.reconstitute(10L, studentRecordId, course, null, null);
-        enrollment.confirm();
+        var enrollment = Enrollment.reconstitute(10L, studentRecordId, courseId, null, null);
+        enrollment.confirm(learningPath);
 
         // Trigger domain event registration
-        enrollment.completeTutorial(tutorialId);
+        enrollment.completeTutorial(tutorialId, learningPath);
         assertThat(enrollment.domainEvents()).hasSize(1);
-
-        var courseEntity = new CoursePersistenceEntity();
-        courseEntity.setId(100L);
-        courseEntity.setTitle("Spring Boot DDD");
-        courseEntity.setDescription("DDD Course");
 
         var persistenceEntity = new EnrollmentPersistenceEntity();
         persistenceEntity.setId(10L);
         persistenceEntity.setAcmeStudentRecordId(studentRecordId);
-        persistenceEntity.setCourse(courseEntity);
+        persistenceEntity.setCourseId(courseId);
         persistenceEntity.setStatus(enrollment.getStatus());
 
         when(enrollmentPersistenceRepository.save(any(EnrollmentPersistenceEntity.class)))
@@ -76,6 +74,7 @@ class EnrollmentRepositoryImplTest {
         // Assert
         assertThat(saved).isNotNull();
         assertThat(saved.getId()).isEqualTo(10L);
+        assertThat(saved.getCourseId()).isEqualTo(courseId);
 
         var eventCaptor = ArgumentCaptor.forClass(TutorialCompletedEvent.class);
         verify(eventPublisher).publishEvent(eventCaptor.capture());
@@ -90,16 +89,12 @@ class EnrollmentRepositoryImplTest {
     @Test
     void findByIdShouldDelegateToPersistenceRepository() {
         // Arrange
-        var courseEntity = new CoursePersistenceEntity();
-        courseEntity.setId(100L);
-        courseEntity.setTitle("Course 1");
-        courseEntity.setDescription("Description 1");
-
+        var courseId = new CourseId(100L);
         var studentRecordId = new AcmeStudentRecordId("123e4567-e89b-12d3-a456-426614174000");
         var persistenceEntity = new EnrollmentPersistenceEntity();
         persistenceEntity.setId(10L);
         persistenceEntity.setAcmeStudentRecordId(studentRecordId);
-        persistenceEntity.setCourse(courseEntity);
+        persistenceEntity.setCourseId(courseId);
 
         when(enrollmentPersistenceRepository.findById(10L)).thenReturn(Optional.of(persistenceEntity));
 
@@ -110,5 +105,6 @@ class EnrollmentRepositoryImplTest {
         assertThat(result).isPresent();
         assertThat(result.get().getId()).isEqualTo(10L);
         assertThat(result.get().getAcmeStudentRecordId()).isEqualTo(studentRecordId);
+        assertThat(result.get().getCourseId()).isEqualTo(courseId);
     }
 }
