@@ -21,25 +21,21 @@ public class Student extends AbstractDomainAggregateRoot<Student> {
     /**
      * The unique identifier for the student.
      */
-    @Setter
     private Long id;
 
     /**
      * The Acme Student Record ID, which is the business identifier for the student.
      */
-    @Setter
     private AcmeStudentRecordId acmeStudentRecordId;
 
     /**
      * The Profile ID associated with the student.
      */
-    @Setter
     private ProfileId profileId;
 
     /**
      * The set of performance metrics for the student.
      */
-    @Setter
     private StudentPerformanceMetricSet performanceMetricSet;
 
     /**
@@ -67,6 +63,30 @@ public class Student extends AbstractDomainAggregateRoot<Student> {
     public Student(ProfileId profileId) {
         this();
         this.profileId = profileId;
+    }
+
+    /**
+     * Reconstitutes an existing student from persistence state.
+     *
+     * @param id The unique identifier.
+     * @param acmeStudentRecordId The Acme Student Record ID.
+     * @param profileId The Profile ID.
+     * @param performanceMetricSet The student performance metrics.
+     * @return The reconstituted Student instance.
+     */
+    public static Student reconstitute(
+            Long id,
+            AcmeStudentRecordId acmeStudentRecordId,
+            ProfileId profileId,
+            StudentPerformanceMetricSet performanceMetricSet) {
+        var student = new Student();
+        student.id = id;
+        student.acmeStudentRecordId = acmeStudentRecordId;
+        student.profileId = profileId;
+        student.performanceMetricSet = performanceMetricSet != null
+                ? performanceMetricSet
+                : new StudentPerformanceMetricSet();
+        return student;
     }
 
     /**

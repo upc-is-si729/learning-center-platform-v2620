@@ -20,39 +20,33 @@ public class Enrollment extends AbstractDomainAggregateRoot<Enrollment> {
     /**
      * The unique identifier for the enrollment.
      */
-    @Setter
     private Long id;
 
     /**
      * The Acme Student Record ID of the student enrolled in the course.
      */
-    @Setter
     private AcmeStudentRecordId acmeStudentRecordId;
 
     /**
      * The course in which the student is enrolled.
      */
-    @Setter
     private Course course;
 
     /**
      * The progress record for the enrollment, tracking tutorial completion.
      */
-    @Setter
     private ProgressRecord progressRecord;
 
     /**
      * The current status of the enrollment.
      */
-    @Setter
     private EnrollmentStatus status;
 
     /**
-     * Default constructor for Enrollment.
-     * Required for reconstruction from persistence.
+     * Protected default constructor for Enrollment.
      */
-    public Enrollment() {
-        // Required for reconstruction
+    protected Enrollment() {
+        this.progressRecord = new ProgressRecord();
     }
 
     /**
@@ -66,6 +60,29 @@ public class Enrollment extends AbstractDomainAggregateRoot<Enrollment> {
         this.course = course;
         this.status = EnrollmentStatus.REQUESTED;
         this.progressRecord = new ProgressRecord();
+    }
+
+    /**
+     * Reconstitutes an existing enrollment from persistence state.
+     *
+     * @param id The unique identifier.
+     * @param acmeStudentRecordId The Acme Student Record ID.
+     * @param course The course for the enrollment.
+     * @param status The current enrollment status.
+     * @param progressRecord The progress record.
+     * @return The reconstituted Enrollment instance.
+     */
+    public static Enrollment reconstitute(
+            Long id,
+            AcmeStudentRecordId acmeStudentRecordId,
+            Course course,
+            EnrollmentStatus status,
+            ProgressRecord progressRecord) {
+        var enrollment = new Enrollment(acmeStudentRecordId, course);
+        enrollment.id = id;
+        enrollment.status = status;
+        enrollment.progressRecord = progressRecord != null ? progressRecord : new ProgressRecord();
+        return enrollment;
     }
 
     /**
