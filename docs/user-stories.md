@@ -32,33 +32,45 @@ Acceptance criteria:
 
 ---
 
-### TS-ARCH002 — Handle Standardized API Error Responses
-As a frontend developer, I want all API error responses to follow a consistent schema so that I can implement a single, reusable error-handling layer in my application.
+### TS-ARCH002 — Handle Standardized API Error Responses (RFC 9457 Problem Details)
+As a frontend developer, I want all API error responses to follow the RFC 9457 Problem Details standard so that I can implement a single, reusable error-handling layer in my application.
 
 Acceptance criteria:
 - Scenario: Any error response
   - Given any API request results in an error (4xx or 5xx)
-  - Then the API returns a JSON body with the following attributes:
-    - `code` (String, required) — machine-readable error code (e.g., `VALIDATION_ERROR`, `COURSE_NOT_FOUND`)
-    - `message` (String, required) — human-readable description of the error
-    - `details` (String, optional) — additional context, such as the specific field or reason
+  - Then the API returns a JSON body with `Content-Type: application/problem+json` (or `application/json`) containing:
+    - `type` (URI, required) — problem type identifier URI formatted as `/api/v1/errors/{error-slug}` (e.g., `/api/v1/errors/not-found`, `/api/v1/errors/validation-error`)
+    - `title` (String, required) — short, human-readable summary of the problem type
+    - `status` (Integer, required) — HTTP status code
+    - `detail` (String, required) — human-readable explanation specific to this occurrence (localized per `Accept-Language`)
+    - `code` (String, required) — machine-readable domain error code (e.g., `VALIDATION_ERROR`, `COURSE_NOT_FOUND`)
+    - `details` (String, optional) — additional context or original error details
+    - `invalidParams` (Array of Objects, optional) — list of validation errors for `400 Bad Request` with `field` and `message` properties
 
-Error code to HTTP status mapping:
+Error code to HTTP status and problem type URI mapping:
 
-| `code` value                             | HTTP Status                 | Typical cause                     |
-|------------------------------------------|-----------------------------|-----------------------------------|
-| `VALIDATION_ERROR`                       | `400 Bad Request`           | Missing or invalid request field  |
-| `*_NOT_FOUND` (e.g., `COURSE_NOT_FOUND`) | `404 Not Found`             | Resource does not exist           |
-| `*_CONFLICT` (e.g., `USER_CONFLICT`)     | `409 Conflict`              | Duplicate or conflicting resource |
-| `BUSINESS_RULE_VIOLATION`                | `422 Unprocessable Entity`  | Operation violates a domain rule  |
-| `UNEXPECTED_ERROR`                       | `500 Internal Server Error` | Unhandled server-side failure     |
+| `code` value                             | HTTP Status                 | Problem `type` URI                     | Title                       |
+|------------------------------------------|-----------------------------|----------------------------------------|-----------------------------|
+| `VALIDATION_ERROR`                       | `400 Bad Request`           | `/api/v1/errors/validation-error`      | Validation Error            |
+| `*_NOT_FOUND` (e.g., `COURSE_NOT_FOUND`) | `404 Not Found`             | `/api/v1/errors/not-found`             | Resource Not Found          |
+| `*_CONFLICT` (e.g., `USER_CONFLICT`)     | `409 Conflict`              | `/api/v1/errors/conflict`              | Resource Conflict           |
+| `BUSINESS_RULE_VIOLATION`                | `422 Unprocessable Entity`  | `/api/v1/errors/business-rule-violation` | Business Rule Violation   |
+| `UNEXPECTED_ERROR`                       | `500 Internal Server Error` | `/api/v1/errors/unexpected-error`      | Internal Server Error       |
 
 Example error response body:
 ```json
 {
+  "type": "/api/v1/errors/validation-error",
+  "title": "Validation Error",
+  "status": 400,
+  "detail": "Request validation failed",
   "code": "VALIDATION_ERROR",
-  "message": "Validation failed",
-  "details": "Field firstName: is required"
+  "invalidParams": [
+    {
+      "field": "firstName",
+      "message": "is required"
+    }
+  ]
 }
 ```
 
@@ -73,17 +85,17 @@ Acceptance criteria:
 - Scenario: Default locale (English)
   - Given the client sends a request without an `Accept-Language` header (or with `Accept-Language: en`)
   - When the API returns an error response
-  - Then the `message` field is in English (e.g., `"Resource not found"`)
+  - Then the `detail` field in the problem detail is in English (e.g., `"Resource not found"`)
 - Scenario: Spanish locale
   - Given the client sends a request with the header `Accept-Language: es`
   - When the API returns an error response
-  - Then the `message` field is in Spanish (e.g., `"Recurso no encontrado"`)
+  - Then the `detail` field in the problem detail is in Spanish (e.g., `"Recurso no encontrado"`)
 - Scenario: Unsupported locale falls back to English
   - Given the client sends a request with an unsupported `Accept-Language` value (e.g., `fr`)
   - When the API returns an error response
-  - Then the `message` field is returned in English.
+  - Then the `detail` field is returned in English.
 
-Note: Only the `message` field in error responses is localized. All resource data fields (course titles, names, etc.) are stored and returned as provided by the client.
+Note: Only the `detail` field in error responses is localized. All resource data fields (course titles, names, etc.) are stored and returned as provided by the client.
 
 ---
 
