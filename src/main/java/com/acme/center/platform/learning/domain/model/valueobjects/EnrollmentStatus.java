@@ -23,5 +23,5 @@ public enum EnrollmentStatus {
     /**
      * The enrollment has been cancelled by the student or the system.
      */
-    CANCELLED
+    CANCELED
 }
