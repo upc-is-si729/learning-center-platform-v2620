@@ -1,20 +1,96 @@
 @startuml
-' ==============================================================================
 ' ACME Learning Center Platform - Class Diagram
 ' Architecture: Modular Monolith with Layered Domain-Driven Design (DDD)
-' Modern Stack: Java 27, Spring Boot 4.1.1, Project Loom, RFC 9457 Problem Details
-' ==============================================================================
+' Technology Stack: Java 27, Spring Boot 4.1.1
+
+
+title
+  <b>ACME Learning Center Platform - Domain Class Diagram</b>
+  <i>Architecture: Modular Monolith with Layered Domain-Driven Design (DDD)</i>
+  <i>Runtime: Java 27 | Spring Boot 4.1.1 | Project Loom | RFC 9457 Problem Details</i>
+end title
+
+header ACME Learning Center Platform - Architecture & Domain Model
+footer Page %page% of %lastpage% - Modular Monolith with Layered DDD
+
+
+' Global Styling Parameters
 
 skinparam classAttributeIconSize 0
 skinparam packageStyle rectangle
 skinparam shadowing false
 skinparam handwritten false
 skinparam roundcorner 5
+skinparam dpi 150
+skinparam wrapWidth 200
+skinparam maxMessageSize 150
 left to right direction
 
-' ==============================================================================
-' BOUNDED CONTEXT: IAM (Identity & Access Management)
-' ==============================================================================
+skinparam class {
+  BackgroundColor White
+  ArrowColor #2C3E50
+  BorderColor #2C3E50
+}
+skinparam class<<aggregate>> {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+}
+skinparam class<<entity>> {
+  BackgroundColor #E8F5E9
+  BorderColor #2E7D32
+}
+skinparam class<<value object>> {
+  BackgroundColor #FFF3E0
+  BorderColor #E65100
+}
+skinparam class<<record>> {
+  BackgroundColor #FFF8E1
+  BorderColor #F57F17
+}
+skinparam class<<controller>> {
+  BackgroundColor #FFFDE7
+  BorderColor #FBC02D
+}
+skinparam class<<service>> {
+  BackgroundColor #F3E5F5
+  BorderColor #7B1FA2
+}
+skinparam class<<repository>> {
+  BackgroundColor #FCE4EC
+  BorderColor #C2185B
+}
+skinparam class<<adapter>> {
+  BackgroundColor #ECEFF1
+  BorderColor #455A64
+}
+skinparam class<<facade>> {
+  BackgroundColor #E0F7FA
+  BorderColor #00838F
+}
+skinparam class<<event handler>> {
+  BackgroundColor #F1F8E9
+  BorderColor #558B2F
+}
+
+' Diagram Legend
+
+legend right
+  |= Stereotype |= Classification |= Layer |
+  |<back:#E3F2FD> <<aggregate>> </back> | Aggregate Root (Encapsulated) | Domain Layer |
+  |<back:#E8F5E9> <<entity>> </back> | Domain Entity | Domain Layer |
+  |<back:#FFF3E0> <<value object>> </back> | Tactical Value Object | Domain Layer |
+  |<back:#FFF8E1> <<record>> </back> | Immutable Java Record | Domain / Interfaces |
+  |<back:#F3E5F5> <<service>> </back> | Command / Query Service (CQRS) | Application Layer |
+  |<back:#FCE4EC> <<repository>> </back> | Domain Repository Port | Domain Layer |
+  |<back:#ECEFF1> <<adapter>> </back> | Infrastructure Adapter (JPA/Loom/Security) | Infrastructure Layer |
+  |<back:#FFFDE7> <<controller>> </back> | REST Controller (Endpoints) | Interfaces Layer |
+  |<back:#E0F7FA> <<facade>> </back> | Anti-Corruption Layer (ACL) | Interfaces / Application |
+  |<back:#F1F8E9> <<event handler>> </back> | Application Event Handler | Application Layer |
+endlegend
+
+
+' IAM (Identity & Access Management) Bounded Context
+
 package "com.acme.center.platform.iam" {
 
   package "interfaces.rest" {
@@ -211,9 +287,8 @@ package "com.acme.center.platform.iam" {
   }
 }
 
-' ==============================================================================
-' BOUNDED CONTEXT: LEARNING
-' ==============================================================================
+' Learning Bounded Context
+
 package "com.acme.center.platform.learning" {
 
   package "interfaces.rest" {
@@ -566,9 +641,8 @@ package "com.acme.center.platform.learning" {
   }
 }
 
-' ==============================================================================
-' BOUNDED CONTEXT: PROFILES
-' ==============================================================================
+' Profiles Bounded Context
+
 package "com.acme.center.platform.profiles" {
 
   package "interfaces.rest" {
@@ -712,9 +786,8 @@ package "com.acme.center.platform.profiles" {
   }
 }
 
-' ==============================================================================
-' BOUNDED CONTEXT: SHARED (Shared Kernel)
-' ==============================================================================
+' Shared Kernel
+
 package "com.acme.center.platform.shared" {
 
   package "domain.model.aggregates" {
@@ -782,9 +855,8 @@ package "com.acme.center.platform.shared" {
   }
 }
 
-' ==============================================================================
-' RELATIONSHIPS & DEPENDENCY INVERSION MAPPINGS
-' ==============================================================================
+' Relationships
+
 
 ' --- IAM Relationships ---
 TokensController --> UserCommandService
