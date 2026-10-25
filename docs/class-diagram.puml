@@ -360,6 +360,9 @@ package "com.acme.center.platform.learning" {
       -title: String
       -description: String
       -learningPath: LearningPath
+      +Course(title: String, description: String)
+      +Course(command: CreateCourseCommand)
+      +reconstitute(id: Long, title: String, description: String, learningPath: LearningPath): Course
       +updateInformation(title: String, description: String): Course
       +addTutorialToLearningPath(tutorialId: TutorialId): void
       +addTutorialToLearningPath(tutorialId: TutorialId, nextTutorialId: TutorialId): void
@@ -370,6 +373,8 @@ package "com.acme.center.platform.learning" {
       -acmeStudentRecordId: AcmeStudentRecordId
       -profileId: ProfileId
       -performanceMetricSet: StudentPerformanceMetricSet
+      +Student(profileId: ProfileId)
+      +reconstitute(id: Long, studentRecordId: AcmeStudentRecordId, profileId: ProfileId, metricSet: StudentPerformanceMetricSet): Student
       +updateMetricsOnCourseCompleted(): void
       +updateMetricsOnTutorialCompleted(): void
       +getStudentRecordId(): String
@@ -379,10 +384,12 @@ package "com.acme.center.platform.learning" {
     class Enrollment <<aggregate>> {
       -id: Long
       -acmeStudentRecordId: AcmeStudentRecordId
-      -course: Course
+      -courseId: CourseId
       -progressRecord: ProgressRecord
       -status: EnrollmentStatus
-      +confirm(): void
+      +Enrollment(studentRecordId: AcmeStudentRecordId, courseId: CourseId)
+      +reconstitute(id: Long, studentRecordId: AcmeStudentRecordId, courseId: CourseId, status: EnrollmentStatus, progressRecord: ProgressRecord): Enrollment
+      +confirm(learningPath: LearningPath): void
       +reject(): void
       +cancel(): void
       +isConfirmed(): boolean
@@ -390,7 +397,7 @@ package "com.acme.center.platform.learning" {
       +isCancelled(): boolean
       +getStatusName(): String
       +calculateDaysElapsed(): long
-      +completeTutorial(tutorialId: TutorialId): void
+      +completeTutorial(tutorialId: TutorialId, learningPath: LearningPath): void
     }
   }
 
@@ -400,6 +407,10 @@ package "com.acme.center.platform.learning" {
   }
 
   package "domain.model.valueobjects" {
+    class CourseId <<value object>> {
+      +courseId: Long
+    }
+
     class AcmeStudentRecordId <<value object>> {
       +studentRecordId: String
       +AcmeStudentRecordId()
