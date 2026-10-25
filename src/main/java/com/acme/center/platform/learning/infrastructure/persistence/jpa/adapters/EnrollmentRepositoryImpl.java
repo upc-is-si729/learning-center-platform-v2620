@@ -2,6 +2,7 @@ package com.acme.center.platform.learning.infrastructure.persistence.jpa.adapter
 
 import com.acme.center.platform.learning.domain.model.aggregates.Enrollment;
 import com.acme.center.platform.learning.domain.model.valueobjects.AcmeStudentRecordId;
+import com.acme.center.platform.learning.domain.model.valueobjects.CourseId;
 import com.acme.center.platform.learning.domain.repositories.EnrollmentRepository;
 import com.acme.center.platform.learning.infrastructure.persistence.jpa.assemblers.EnrollmentPersistenceAssembler;
 import com.acme.center.platform.learning.infrastructure.persistence.jpa.repositories.EnrollmentPersistenceRepository;
@@ -51,14 +52,14 @@ public class EnrollmentRepositoryImpl implements EnrollmentRepository {
 
     @Override
     public List<Enrollment> findAllByCourseId(Long courseId) {
-        return enrollmentPersistenceRepository.findAllByCourseId(courseId).stream()
+        return enrollmentPersistenceRepository.findAllByCourseId(new CourseId(courseId)).stream()
                 .map(EnrollmentPersistenceAssembler::toDomainFromPersistence)
                 .toList();
     }
 
     @Override
     public Optional<Enrollment> findByAcmeStudentRecordIdAndCourseId(AcmeStudentRecordId studentRecordId, Long courseId) {
-        return enrollmentPersistenceRepository.findByAcmeStudentRecordIdAndCourseId(studentRecordId, courseId)
+        return enrollmentPersistenceRepository.findByAcmeStudentRecordIdAndCourseId(studentRecordId, new CourseId(courseId))
                 .map(EnrollmentPersistenceAssembler::toDomainFromPersistence);
     }
 

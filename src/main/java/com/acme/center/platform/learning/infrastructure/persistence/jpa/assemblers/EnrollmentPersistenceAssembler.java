@@ -19,15 +19,13 @@ public final class EnrollmentPersistenceAssembler {
     public static Enrollment toDomainFromPersistence(EnrollmentPersistenceEntity entity) {
         if (entity == null) return null;
 
-        var course = CoursePersistenceAssembler.toDomainFromPersistence(entity.getCourse());
-
         var progressRecord = new ProgressRecord();
         var progressItems = new ArrayList<ProgressRecordItem>();
 
         var enrollment = Enrollment.reconstitute(
                 entity.getId(),
                 entity.getAcmeStudentRecordId(),
-                course,
+                entity.getCourseId(),
                 entity.getStatus(),
                 progressRecord);
 
@@ -58,7 +56,7 @@ public final class EnrollmentPersistenceAssembler {
             entity.setId(enrollment.getId());
         }
         entity.setAcmeStudentRecordId(enrollment.getAcmeStudentRecordId());
-        entity.setCourse(CoursePersistenceAssembler.toPersistenceFromDomain(enrollment.getCourse()));
+        entity.setCourseId(enrollment.getCourseId());
         entity.setStatus(enrollment.getStatus());
 
         var progressItems = new ArrayList<ProgressRecordItemPersistenceEntity>();

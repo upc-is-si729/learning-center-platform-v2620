@@ -1,8 +1,10 @@
 package com.acme.center.platform.learning.infrastructure.persistence.jpa.entities;
 
 import com.acme.center.platform.learning.domain.model.valueobjects.AcmeStudentRecordId;
+import com.acme.center.platform.learning.domain.model.valueobjects.CourseId;
 import com.acme.center.platform.learning.domain.model.valueobjects.EnrollmentStatus;
 import com.acme.center.platform.learning.infrastructure.persistence.jpa.converters.AcmeStudentRecordIdPersistenceConverter;
+import com.acme.center.platform.learning.infrastructure.persistence.jpa.converters.CourseIdPersistenceConverter;
 import com.acme.center.platform.shared.infrastructure.persistence.jpa.entities.AuditableAbstractPersistenceEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -26,9 +28,9 @@ public class EnrollmentPersistenceEntity extends AuditableAbstractPersistenceEnt
     @Column(name = "acme_student_id", nullable = false)
     private AcmeStudentRecordId acmeStudentRecordId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id", nullable = false)
-    private CoursePersistenceEntity course;
+    @Convert(converter = CourseIdPersistenceConverter.class)
+    @Column(name = "course_id", nullable = false)
+    private CourseId courseId;
 
     @OneToMany(mappedBy = "enrollment", cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
     private List<ProgressRecordItemPersistenceEntity> progressRecordItems = new ArrayList<>();
