@@ -4,6 +4,7 @@ import com.acme.center.platform.iam.domain.model.aggregates.User;
 import com.acme.center.platform.iam.domain.repositories.UserRepository;
 import com.acme.center.platform.iam.infrastructure.persistence.jpa.assemblers.UserPersistenceAssembler;
 import com.acme.center.platform.iam.infrastructure.persistence.jpa.repositories.UserPersistenceRepository;
+import com.acme.center.platform.shared.infrastructure.events.DomainEventPublisher;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -16,9 +17,13 @@ import java.util.Optional;
 public class UserRepositoryImpl implements UserRepository {
 
     private final UserPersistenceRepository userPersistenceRepository;
+    private final DomainEventPublisher domainEventPublisher;
 
-    public UserRepositoryImpl(UserPersistenceRepository userPersistenceRepository) {
+    public UserRepositoryImpl(
+            UserPersistenceRepository userPersistenceRepository,
+            DomainEventPublisher domainEventPublisher) {
         this.userPersistenceRepository = userPersistenceRepository;
+        this.domainEventPublisher = domainEventPublisher;
     }
 
     @Override
@@ -39,7 +44,9 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public User save(User user) {
         var saved = userPersistenceRepository.save(UserPersistenceAssembler.toPersistenceFromDomain(user));
-        return UserPersistenceAssembler.toDomainFromPersistence(saved);
+        var savedUser = UserPersistenceAssembler.toDomainFromPersistence(saved);
+        domainEventPublisher.publishAndClearEvents(user);
+        return savedUser;
     }
 
     @Override
