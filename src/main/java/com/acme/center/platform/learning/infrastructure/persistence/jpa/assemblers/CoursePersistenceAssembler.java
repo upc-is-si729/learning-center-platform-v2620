@@ -20,29 +20,28 @@ public final class CoursePersistenceAssembler {
     public static Course toDomainFromPersistence(CoursePersistenceEntity entity) {
         if (entity == null) return null;
 
-        var course = new Course();
-        course.setId(entity.getId());
-        course.setTitle(entity.getTitle());
-        course.setDescription(entity.getDescription());
+        var learningPath = new com.acme.center.platform.learning.domain.model.valueobjects.LearningPath();
+        var course = Course.reconstitute(entity.getId(), entity.getTitle(), entity.getDescription(), learningPath);
 
-        var domainItemsById = new HashMap<Long, LearningPathItem>();
-        for (var item : entity.getLearningPathItems()) {
-            var domainItem = new LearningPathItem(course, item.getTutorialId(), null);
-            domainItem.setId(item.getId());
-            domainItemsById.put(item.getId(), domainItem);
-        }
-        for (var item : entity.getLearningPathItems()) {
-            var current = domainItemsById.get(item.getId());
-            if (item.getNextItem() != null) {
-                current.setNextItem(domainItemsById.get(item.getNextItem().getId()));
+        if (entity.getLearningPathItems() != null) {
+            var domainItemsById = new HashMap<Long, LearningPathItem>();
+            for (var item : entity.getLearningPathItems()) {
+                var domainItem = LearningPathItem.reconstitute(item.getId(), course, item.getTutorialId(), null);
+                domainItemsById.put(item.getId(), domainItem);
             }
-        }
+            for (var item : entity.getLearningPathItems()) {
+                var current = domainItemsById.get(item.getId());
+                if (item.getNextItem() != null) {
+                    current.updateNextItem(domainItemsById.get(item.getNextItem().getId()));
+                }
+            }
 
-        List<LearningPathItem> orderedItems = new ArrayList<>();
-        for (var item : entity.getLearningPathItems()) {
-            orderedItems.add(domainItemsById.get(item.getId()));
+            List<LearningPathItem> orderedItems = new ArrayList<>();
+            for (var item : entity.getLearningPathItems()) {
+                orderedItems.add(domainItemsById.get(item.getId()));
+            }
+            learningPath.setLearningPathItems(orderedItems);
         }
-        course.getLearningPath().setLearningPathItems(orderedItems);
 
         return course;
     }

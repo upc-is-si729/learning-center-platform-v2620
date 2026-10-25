@@ -42,10 +42,7 @@ class EnrollmentRepositoryImplTest {
     @Test
     void saveShouldPublishDomainEventsAndClearThem() {
         // Arrange
-        var course = new Course();
-        course.setId(100L);
-        course.setTitle("Spring Boot DDD");
-        course.setDescription("DDD Course");
+        var course = Course.reconstitute(100L, "Spring Boot DDD", "DDD Course", new com.acme.center.platform.learning.domain.model.valueobjects.LearningPath());
         var tutorialId = new TutorialId(200L);
         course.addTutorialToLearningPath(tutorialId);
 

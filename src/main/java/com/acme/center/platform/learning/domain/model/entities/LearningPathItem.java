@@ -18,25 +18,21 @@ public class LearningPathItem {
     /**
      * The unique identifier for the learning path item.
      */
-    @Setter
     private Long id;
 
     /**
      * The course this learning path item belongs to.
      */
-    @Setter
     private Course course;
 
     /**
      * The ID of the tutorial associated with this item.
      */
-    @Setter
     private TutorialId tutorialId;
 
     /**
      * The next item in the learning path sequence.
      */
-    @Setter
     private LearningPathItem nextItem;
 
     /**
@@ -49,6 +45,21 @@ public class LearningPathItem {
         this.course = course;
         this.tutorialId = tutorialId;
         this.nextItem = nextItem;
+    }
+
+    /**
+     * Reconstitutes an existing LearningPathItem from persistence.
+     *
+     * @param id The unique identifier.
+     * @param course The associated course.
+     * @param tutorialId The tutorial ID.
+     * @param nextItem The next item in the sequence.
+     * @return The reconstituted LearningPathItem.
+     */
+    public static LearningPathItem reconstitute(Long id, Course course, TutorialId tutorialId, LearningPathItem nextItem) {
+        var item = new LearningPathItem(course, tutorialId, nextItem);
+        item.id = id;
+        return item;
     }
 
     /**
