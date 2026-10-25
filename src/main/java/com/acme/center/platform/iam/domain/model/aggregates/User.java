@@ -36,7 +36,7 @@ public class User extends AbstractDomainAggregateRoot<User> {
     }
 
     /**
-     * Reconstitutes an existing user from persistence state.
+     * Reconstitutes an existing user from the persistence state.
      *
      * @param id The unique identifier.
      * @param username The username.
