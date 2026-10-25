@@ -87,10 +87,10 @@ public class Enrollment extends AbstractDomainAggregateRoot<Enrollment> {
 
     /**
      * Cancels the enrollment.
-     * Changes the status to CANCELLED.
+     * Changes the status to `CANCELED`.
      */
     public void cancel() {
-        this.status = EnrollmentStatus.CANCELLED;
+        this.status = EnrollmentStatus.CANCELED;
     }
 
     /**
@@ -110,15 +110,15 @@ public class Enrollment extends AbstractDomainAggregateRoot<Enrollment> {
     }
 
     /**
-     * Checks if the enrollment is cancelled.
-     * @return true if the enrollment is cancelled, false otherwise.
+     * Checks if the enrollment is canceled.
+     * @return true if the enrollment is canceled, false otherwise.
      */
     public boolean isCancelled() {
-        return this.status == EnrollmentStatus.CANCELLED;
+        return this.status == EnrollmentStatus.CANCELED;
     }
 
     /**
-     * Gets the name of the enrollment status in lowercase.
+     * Gets the name of the enrollment status in lowercase format.
      * @return The status name.
      */
     public String getStatusName() {
