@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 /**
- * ACL service used by the Learning bounded context to interact with Profiles capabilities.
+ * ACL service used by the `Learning` bounded context to interact with Profiles capabilities.
  */
 @Service
 public class ExternalProfileService {
