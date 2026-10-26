@@ -55,7 +55,7 @@ workspace "ACME Learning Ecosystem Solution - C4 Model" "System-wide software ar
                 
             }
 
-            database = container "Learning Center Database" "Stores all domain data for IAM, profiles, courses, students, and enrollments." "MySQL Server" {
+            database = container "Learning Center Database" "Stores all domain data for IAM, profiles, courses, students, and enrollments." "Postgres Server" {
                 tags "Database"
             }
         }

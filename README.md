@@ -8,7 +8,7 @@ ACME Learning Center Platform is a state-of-the-art RESTful API built on the fou
 
 - **Language:** Java 27 (with Project Loom Virtual Threads, Sequenced Collections, and Stream Gatherers)
 - **Framework:** Spring Boot 4.1.1
-- **Database:** MySQL 8+
+- **Database:** Postgres 18
 - **Persistence:** Spring Data JPA / Hibernate with Physical Snake Case Naming Strategy
 - **Concurrency:** Project Loom Virtual Threads (`spring.threads.virtual.enabled=true`)
 - **API Standards:** RFC 9457 Problem Details for HTTP APIs
@@ -23,7 +23,7 @@ ACME Learning Center Platform is a state-of-the-art RESTful API built on the fou
 
 - Java 27 JDK
 - Maven 3.9+
-- MySQL 8.0+
+- Postgres 18.04+
 - Docker (optional)
 
 ---
@@ -61,12 +61,12 @@ Required environment variables (especially for the `prod` profile):
 
 | Variable                 | Description                | Default (Dev)                         |
 |--------------------------|----------------------------|---------------------------------------|
-| `DATABASE_URL`           | MySQL host address         | `localhost`                           |
-| `DATABASE_PORT`          | MySQL port                 | `3306`                                |
-| `DATABASE_NAME`          | Database name              | `learning_center_platform`            |
-| `DATABASE_USER`          | Database username          | `root`                                |
-| `DATABASE_PASSWORD`      | Database password          | `password`                            |
-| `PORT`                   | Application port           | `8080`                                |
+| `DATABASE_URL`           | Postgres host address         | `localhost`                           |
+| `DATABASE_PORT`          | Postgres port                 | `5432`                                |
+| `DATABASE_NAME`          | Database name              | `learning_center_os`            |
+| `DATABASE_USER`          | Database username          | `postgres`                                |
+| `DATABASE_PASSWORD`      | Database password          | `12345678`                            |
+| `PORT`                   | Application port           | `8092`                                |
 | `SPRING_PROFILES_ACTIVE` | Active Spring profile      | `dev`                                 |
 | `JWT_SECRET`             | Secret key for JWT signing | `replace-with-a-strong-random-secret` |
 
@@ -75,7 +75,7 @@ Required environment variables (especially for the `prod` profile):
 ## Getting Started
 
 ### 1) Database Setup
-Ensure MySQL is running and create the database specified in `DATABASE_NAME`.
+Ensure Postgres is running and create the database specified in `DATABASE_NAME`.
 
 ### 2) Run the Application
 
@@ -87,10 +87,10 @@ Ensure MySQL is running and create the database specified in `DATABASE_NAME`.
 # Run with specific profile and environment variables
 SPRING_PROFILES_ACTIVE=prod \
 DATABASE_URL=localhost \
-DATABASE_PORT=3306 \
-DATABASE_NAME=learning-center-os \
-DATABASE_USER=root \
-DATABASE_PASSWORD=password \
+DATABASE_PORT=5432 \
+DATABASE_NAME=learning_center_os \
+DATABASE_USER=postgres \
+DATABASE_PASSWORD=12345678 \
 JWT_SECRET=your-secret \
 PORT=8080 \
 ./mvnw clean spring-boot:run
@@ -102,19 +102,19 @@ PORT=8080 \
 docker build -t acme-learning-platform .
 
 # Run the container
-docker run -p 8080:8080 \
+docker run -p 8092:8092 \ \
   -e DATABASE_URL=host.docker.internal \
-  -e DATABASE_NAME=learning-center-os \
-  -e DATABASE_USER=root \
-  -e DATABASE_PASSWORD=password \
+  -e DATABASE_NAME=learning_center_os \
+  -e DATABASE_USER=postgres \
+  -e DATABASE_PASSWORD=12345678 \
   -e JWT_SECRET=your-secret \
   acme-learning-platform
 ```
 
 ### 3) API Documentation
 Once running, access the interactive documentation at:
-- **Swagger UI:** `http://localhost:8080/swagger-ui/index.html`
-- **OpenAPI JSON:** `http://localhost:8080/v3/api-docs`
+- **Swagger UI:** `http://localhost:8092/swagger-ui/index.html`
+- **OpenAPI JSON:** `http://localhost:8092/v3/api-docs`
 
 ---
 
