@@ -67,7 +67,7 @@ public class OpenApiConfiguration {
                         .url("https://staging-api.acme-learning.com")
                         .description("Staging Environment"),
                 new Server()
-                        .url("https://api.acme-learning.com")
+                        .url("https://learning-center-platform-v2620.onrender.com")
                         .description("Production Environment")
         ));
 
